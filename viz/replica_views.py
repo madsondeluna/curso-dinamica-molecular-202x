@@ -73,7 +73,18 @@ _CONTROLS = """
     Promise.resolve(v().setFrame(f)).then(function () { v().render(); label(); });
   };
   function tag() { return v().getNumFrames() > 1 ? '_quadro' + (v().getFrame() + 1) : ''; }
-  el('png').onclick = function () { v().render(); save(v().pngURI(), name + tag() + '.png'); };
+  // PNG em alta resolucao: densidade de pixels 4x so durante a captura (mesmo enquadramento)
+  function hires(scale) {
+    var own = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio'), uri;
+    Object.defineProperty(window, 'devicePixelRatio', {configurable: true, get: function () { return scale; }});
+    try { v().resize(); v().render(); uri = v().pngURI(); }
+    finally {
+      if (own) Object.defineProperty(window, 'devicePixelRatio', own); else delete window.devicePixelRatio;
+      v().resize(); v().render();
+    }
+    return uri;
+  }
+  el('png').onclick = function () { save(hires(4), name + tag() + '.png'); };
   el('pdb').onclick = function () {
     var atoms = v().selectedAtoms({}), out = [], s = 0;
     function pad(x, n, left) { x = String(x); while (x.length < n) x = left ? x + ' ' : ' ' + x; return x.slice(0, n); }
