@@ -238,7 +238,9 @@ if not cached(['water.gro'], 'caixa de agua W'):
     os.system('wget -q https://cgmartini-library.s3.ca-central-1.amazonaws.com/1_Downloads/example_applications/solvent_systems/water.gro')
 
 # Replica ja simulada: o pacote traz as saidas de todas as etapas
-if USE_PRECOMPUTED and not cached(['summary.json'], f'replica {REPLICA} pre-computada'):
+# a lista inclui os arquivos das versoes mais novas do pacote: uma copia antiga no Drive e baixada de novo
+PACOTE = ['summary.json', 'md_prot_pbc.xtc', 'mem_whole.xtc']
+if USE_PRECOMPUTED and not cached(PACOTE, f'replica {REPLICA} pre-computada'):
     os.system(f'wget -q {REPO}/results/rep{REPLICA}.tar.gz -O rep.tar.gz && tar xzf rep.tar.gz && rm rep.tar.gz')
     print('Replica baixada.' if os.path.exists('summary.json') else 'Replica nao encontrada no GitHub: o notebook vai simular.')
 
@@ -780,7 +782,7 @@ run_md('md_prot', 'MD produtiva (15 ns)', 'md_prot.mdp', 'npt.gro', 'topol.top',
 # Indice com o grupo BB, reimagem e ajuste de rotacao/translacao
 if not cached(['index_prot.ndx'], 'indice BB'):
     os.system('printf "a BB\\\\nq\\\\n" | gmx make_ndx -f md_prot.tpr -o index_prot.ndx -quiet > /dev/null 2>&1')
-if not cached(['md_prot_fit.xtc'], 'reimagem + ajuste'):
+if not cached(['md_prot_pbc.xtc', 'md_prot_fit.xtc'], 'reimagem + ajuste'):
     os.system('printf "Protein\\\\nSystem\\\\n" | gmx trjconv -s md_prot.tpr -f md_prot.xtc -n index_prot.ndx '
               '-o md_prot_pbc.xtc -pbc mol -center -ur compact -quiet > /dev/null 2>&1')
     os.system('printf "BB\\\\nProtein\\\\n" | gmx trjconv -s md_prot.tpr -f md_prot_pbc.xtc -n index_prot.ndx '
