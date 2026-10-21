@@ -7,6 +7,13 @@ Material de aula executável no Google Colab: uma proteína e uma membrana que s
 | `MD_Martini.ipynb` | coarse-grained, Martini 3 | ubiquitina (1UBQ) em água; automontagem de bicamada de DSPC | <a href="https://colab.research.google.com/github/madsondeluna/curso-dinamica-molecular-202x/blob/main/MD_Martini.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
 
 
+**Autoria:** Madson A. de Luna-Aragão, MSc
+
+- Programa Interunidades de Pós-Graduação em Bioinformática, Universidade Federal de Minas Gerais (UFMG), Brasil
+- CNRS, Institut de Biologie et Chimie des Protéines (IBCP), Lyon, França
+
+[madsondeluna@gmail.com](mailto:madsondeluna@gmail.com) · [madsondeluna.com](https://madsondeluna.com) · [GitHub](https://github.com/madsondeluna) · [LinkedIn](https://www.linkedin.com/in/madsonaragao/)
+
 ## Índice
 
 - [Roteiro da aula](#roteiro-da-aula)
@@ -22,6 +29,7 @@ Material de aula executável no Google Colab: uma proteína e uma membrana que s
 - [Material legado: curso atomístico](#material-legado-curso-atomístico)
 - [Referência técnica](#referência-técnica)
 - [Referências](#referências)
+- [Autoria](#autoria)
 
 
 ## Roteiro da aula
@@ -257,6 +265,57 @@ A bicamada desta aula tem um único lipídio. Membranas de verdade misturam deze
 **Exemplo translacional: peptídeos antimicrobianos.** Peptídeos do sistema imune, como magainina e LL-37, são catiônicos. São atraídos pelas superfícies negativas das bactérias e interagem pouco com a superfície neutra e rica em colesterol das células humanas, uma das bases da seletividade buscada em novos antibióticos (Zasloff, 2002). Todos esses lipídios têm parâmetros no Martini 3 (M3-Lipid-Parameters): trocar a bicamada desta aula por uma membrana bacteriana ou tumoral é mudar a composição de entrada.
 
 
+### Domínios laterais: balsas lipídicas
+
+A membrana também não é homogênea no plano. Esfingomielina, colesterol e lipídios de caudas saturadas se agrupam em domínios mais ordenados e mais espessos (fase líquido-ordenada, Lo), cercados por fosfolipídios insaturados em fase líquido-desordenada (Ld). Esses domínios, as balsas lipídicas, são dinâmicos, têm dimensões nanométricas e concentram proteínas de sinalização (Simons e Ikonen, 1997; Lingwood e Simons, 2010).
+
+![Balsa lipídica](imagens/fund_membrana_dominios.png)
+
+**Câncer.** Células tumorais costumam acumular colesterol na membrana. As balsas reúnem receptores e moléculas de sinalização ligadas a crescimento, adesão, migração e invasão, e alterar o colesterol das balsas é estudado como estratégia terapêutica (Vona *et al.*, 2021).
+
+**No Martini.** Uma mistura de PC saturada, PC insaturada e colesterol se separa sozinha em fases Lo e Ld em simulações Martini, com propriedades próximas das medidas experimentais (Risselada e Marrink, 2008). É o mesmo tipo de automontagem da Parte B, com três componentes em vez de um.
+
+
+### Insaturação das caudas: inflamação e câncer
+
+Uma ligação dupla *cis* dobra a cauda. Caudas saturadas, como as 18:0 do DSPC desta aula, ficam retas e empacotam densamente; caudas poli-insaturadas, como o araquidonato (20:4, quatro duplas ligações), dobram, ocupam mais área e deixam a membrana mais fluida. As duplas ligações também são o ponto em que a cauda reage com oxigênio.
+
+![Caudas saturadas e poli-insaturadas](imagens/fund_insaturacao.png)
+
+**Inflamação.** A fosfolipase A2 libera o araquidonato da posição *sn*-2 dos fosfolipídios. Ciclo-oxigenases e lipoxigenases o convertem em prostaglandinas e leucotrienos, mediadores da inflamação (Dennis e Norris, 2015). Anti-inflamatórios não esteroides, como o ibuprofeno, inibem as ciclo-oxigenases.
+
+**Câncer.** Tumores com lipogênese ativa produzem os próprios ácidos graxos e têm fosfolipídios mais saturados. Com menos duplas ligações, a membrana sofre menos peroxidação, e as células ficam mais protegidas de radicais livres e de quimioterápicos como a doxorrubicina (Rysman *et al.*, 2010). No sentido oposto, PE com araquidonato ou adrenato oxidados dispara a ferroptose, uma forma de morte celular regulada que é alvo de pesquisa de novos fármacos (Kagan *et al.*, 2017).
+
+**No Martini.** A insaturação aparece no tipo de bead da cauda: o DSPC (18:0) só tem beads C; o DOPC (18:1) tem um bead D no lugar da dupla ligação. Trocar DSPC por DOPC na Parte B é trocar uma cauda reta por uma cauda dobrada.
+
+
+### Proteínas de membrana: receptores e transportadores
+
+De 20 a 30% dos genes da maioria dos genomas codificam proteínas de membrana (Krogh *et al.*, 2001). Elas atravessam o núcleo hidrofóbico da bicamada, de cerca de 3 nm, com hélices de resíduos hidrofóbicos.
+
+![Proteínas de membrana](imagens/fund_proteinas_membrana.png)
+
+**Receptores.** Os receptores acoplados à proteína G (GPCRs) têm sete hélices transmembrana; cerca de 34% dos fármacos aprovados pela FDA agem em GPCRs (Hauser *et al.*, 2017). Os receptores tirosina-quinase, como o EGFR, têm uma hélice por monômero e sinalizam quando dois monômeros se juntam; o EGFR é alvo de terapias contra câncer.
+
+**Transportadores.** A glicoproteína P (P-gp, ABCB1) usa ATP para expulsar quimioterápicos da célula. Sua superexpressão é uma das causas de resistência a múltiplos fármacos em tumores (Gottesman *et al.*, 2002).
+
+**No Martini.** Simulações de dez proteínas de membrana em uma membrana plasmática com mais de 60 tipos de lipídio mostraram que cada proteína enriquece ou depleta lipídios específicos ao seu redor (Corradi *et al.*, 2018). O martinize2 desta aula converte proteínas de membrana do mesmo jeito que converteu a ubiquitina; o passo extra é inseri-las na bicamada.
+
+
+### Peptídeos antimicrobianos em membranas bacterianas
+
+Peptídeos antimicrobianos (AMPs) como magainina e LL-37 são curtos, catiônicos e anfipáticos: uma face concentra lisinas e argininas, a outra é hidrofóbica. A face positiva se liga ao PG e à cardiolipina da bactéria; a face hidrofóbica entra no núcleo da bicamada. Três modelos descrevem o que acontece depois (Brogden, 2005; Shai, 2002):
+
+![Mecanismos dos AMPs](imagens/fund_amp_membrana.png)
+
+- **Tapete**: os peptídeos cobrem a superfície e, acima de uma concentração limite, desfazem a bicamada como um detergente.
+- **Poro toroidal**: os peptídeos entram na membrana e arrastam as cabeças dos lipídios, que passam a forrar o poro junto com eles.
+- **Barril**: os peptídeos se alinham como as aduelas de um barril e formam sozinhos a parede de um canal.
+
+Parte dos AMPs atravessa a membrana sem rompê-la e age em alvos internos, como a síntese de DNA, de proteínas ou da parede celular (Brogden, 2005). A seletividade vem da carga: a superfície bacteriana é aniônica, e a face externa das células humanas é neutra e rica em colesterol.
+
+**No Martini.** A formação de um poro envolve vários peptídeos e centenas de lipídios, numa escala de tempo além do alcance usual do all-atom; por isso esses processos costumam ser estudados em coarse-grained, com o peptídeo convertido pelo martinize2 e a membrana bacteriana montada com PE, PG e cardiolipina.
+
 ## 7. Réplicas e sementes
 
 Uma simulação é uma amostra de uma trajetória possível. Uma conclusão tirada de uma única corrida pode ser acaso daquela trajetória. Com réplicas independentes, cada resultado vira média ± desvio, e um evento raro em uma só fica visível como raro.
@@ -446,11 +505,33 @@ rvdw                     = 1.1
 - Utsugi, T.; Schroit, A. J.; Connor, J.; Bucana, C. D.; Fidler, I. J. Elevated expression of phosphatidylserine in the outer membrane leaflet of human tumor cells and recognition by activated human blood monocytes. *Cancer Res.* **1991**, *51*, 3062-3066. PMID 2032247
 - Sohlenkamp, C.; Geiger, O. Bacterial membrane lipids: diversity in structures and pathways. *FEMS Microbiol. Rev.* **2016**, *40*, 133-159. https://doi.org/10.1093/femsre/fuv008
 - Zasloff, M. Antimicrobial peptides of multicellular organisms. *Nature* **2002**, *415*, 389-395. https://doi.org/10.1038/415389a
+- Simons, K.; Ikonen, E. Functional rafts in cell membranes. *Nature* **1997**, *387*, 569-572. https://doi.org/10.1038/42408
+- Lingwood, D.; Simons, K. Lipid rafts as a membrane-organizing principle. *Science* **2010**, *327*, 46-50. https://doi.org/10.1126/science.1174621
+- Vona, R.; Iessi, E.; Matarrese, P. Role of cholesterol and lipid rafts in cancer signaling: a promising therapeutic opportunity? *Front. Cell Dev. Biol.* **2021**, *9*, 622908. https://doi.org/10.3389/fcell.2021.622908
+- Risselada, H. J.; Marrink, S. J. The molecular face of lipid rafts in model membranes. *Proc. Natl. Acad. Sci. USA* **2008**, *105*, 17367-17372. https://doi.org/10.1073/pnas.0807527105
+- Dennis, E. A.; Norris, P. C. Eicosanoid storm in infection and inflammation. *Nat. Rev. Immunol.* **2015**, *15*, 511-523. https://doi.org/10.1038/nri3859
+- Rysman, E. *et al.* De novo lipogenesis protects cancer cells from free radicals and chemotherapeutics by promoting membrane lipid saturation. *Cancer Res.* **2010**, *70*, 8117-8126. https://doi.org/10.1158/0008-5472.CAN-09-3871
+- Kagan, V. E. *et al.* Oxidized arachidonic and adrenic PEs navigate cells to ferroptosis. *Nat. Chem. Biol.* **2017**, *13*, 81-90. https://doi.org/10.1038/nchembio.2238
+- Krogh, A.; Larsson, B.; von Heijne, G.; Sonnhammer, E. L. Predicting transmembrane protein topology with a hidden Markov model: application to complete genomes. *J. Mol. Biol.* **2001**, *305*, 567-580. https://doi.org/10.1006/jmbi.2000.4315
+- Hauser, A. S. *et al.* Trends in GPCR drug discovery: new agents, targets and indications. *Nat. Rev. Drug Discov.* **2017**, *16*, 829-842. https://doi.org/10.1038/nrd.2017.178
+- Gottesman, M. M.; Fojo, T.; Bates, S. E. Multidrug resistance in cancer: role of ATP-dependent transporters. *Nat. Rev. Cancer* **2002**, *2*, 48-58. https://doi.org/10.1038/nrc706
+- Corradi, V. *et al.* Lipid-protein interactions are unique fingerprints for membrane proteins. *ACS Cent. Sci.* **2018**, *4*, 709-717. https://doi.org/10.1021/acscentsci.8b00143
+- Brogden, K. A. Antimicrobial peptides: pore formers or metabolic inhibitors in bacteria? *Nat. Rev. Microbiol.* **2005**, *3*, 238-250. https://doi.org/10.1038/nrmicro1098
+- Shai, Y. Mode of action of membrane active antimicrobial peptides. *Biopolymers* **2002**, *66*, 236-248. https://doi.org/10.1002/bip.10260
 - Bross, P. F. *et al.* Approval summary for bortezomib for injection in the treatment of multiple myeloma. *Clin. Cancer Res.* **2004**, *10*, 3954-3964. https://doi.org/10.1158/1078-0432.CCR-03-0781
 - Tutorial Martini 3, *Lipid bilayers, Part I: Self-assembly*: https://cgmartini.nl/docs/tutorials/Martini3/LipidsI/
 - Inputs do tutorial de Lemkul: https://github.com/Lemkul-Lab/gmx_tutorials_jpcb
 - Manual do GROMACS: https://manual.gromacs.org/
 
+
+## Autoria
+
+Madson A. de Luna-Aragão, MSc
+
+- Programa Interunidades de Pós-Graduação em Bioinformática, Universidade Federal de Minas Gerais (UFMG), Brasil
+- CNRS, Institut de Biologie et Chimie des Protéines (IBCP), Lyon, França
+
+[madsondeluna@gmail.com](mailto:madsondeluna@gmail.com) · [madsondeluna.com](https://madsondeluna.com) · [GitHub](https://github.com/madsondeluna) · [LinkedIn](https://www.linkedin.com/in/madsonaragao/)
 
 ## Licença
 

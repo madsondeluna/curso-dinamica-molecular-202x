@@ -592,6 +592,257 @@ def fig_cell_membranes():
     print('   fund_membranas_celulas.png')
 
 
+
+# ---------------------------------------------------------------- membranas: dominios, insaturacao, proteinas, AMPs
+PROT, PROT_EDGE = '#de8552', '#9c5a32'
+TAIL = '#9a9a9a'
+
+
+def _lip(ax, x, y, up, color, q=0, tail='sat', tlen=1.2, r=0.3, lw=1.4):
+    """Um fosfolipidio: cabeca em (x, y), duas caudas para dentro da bicamada.
+    tail: 'sat' retas, 'mono' uma dobra cis, 'pufa' varias dobras."""
+    d = -1 if up else 1
+    for k, dx in enumerate((-0.11, 0.11)):
+        y0 = y + d * r
+        if tail == 'mono' and k == 1:
+            xs = [x + dx, x + dx, x + dx + 0.3]
+            ys = [y0, y0 + d * tlen * 0.5, y0 + d * tlen]
+        elif tail == 'pufa':
+            n = 5
+            xs = [x + dx + (0.13 * (-1) ** j if 0 < j < n else 0) for j in range(n + 1)]
+            ys = [y0 + d * tlen * j / n for j in range(n + 1)]
+        else:
+            xs, ys = [x + dx, x + dx], [y0, y0 + d * tlen]
+        ax.plot(xs, ys, color=TAIL, lw=lw, solid_capstyle='round', solid_joinstyle='round', zorder=2)
+    ax.add_patch(Circle((x, y), r, color=color, ec=INK, lw=0.5, zorder=3))
+    if q:
+        ax.text(x, y, '−' * abs(q), ha='center', va='center', color='white', fontsize=7, fontweight='bold', zorder=4)
+
+
+def _chol(ax, x, y, up, tlen=0.9):
+    d = -1 if up else 1
+    y0 = y + d * 0.2
+    ax.add_patch(Rectangle((x - 0.17, min(y0, y0 + d * tlen)), 0.34, tlen, color=LIPID['CHOL'][0], lw=0, zorder=2))
+    ax.add_patch(Circle((x, y), 0.15, color=LIPID['CHOL'][0], ec=INK, lw=0.4, zorder=3))
+
+
+def _helix(ax, x, y0, y1, w=0.5, color=PROT, z=5):
+    ax.add_patch(FancyBboxPatch((x - w / 2, min(y0, y1)), w, abs(y1 - y0),
+                                boxstyle='round,pad=0,rounding_size=0.2', fc=color, ec=PROT_EDGE, lw=0.8, zorder=z))
+
+
+def _water(ax, x0, x1, top, bot, h=1.0, labels=('meio externo', 'citoplasma')):
+    ax.axhspan(top, top + h, xmin=0, xmax=1, color='#a6cfe3', alpha=0.35, lw=0, zorder=0)
+    ax.axhspan(bot - h, bot, xmin=0, xmax=1, color='#a6cfe3', alpha=0.35, lw=0, zorder=0)
+    if labels:
+        ax.text(x1 + 0.3, top + h / 2, labels[0], ha='left', va='center', fontsize=8, color=INK)
+        ax.text(x1 + 0.3, bot - h / 2, labels[1], ha='left', va='center', fontsize=8, color=INK)
+
+
+def _lipid_handles(names, extra=()):
+    from matplotlib.lines import Line2D
+    hs = [Line2D([], [], ls='none', marker='o', ms=9, mfc=LIPID[n][0], mec=INK, mew=0.5) for n in names]
+    labs = [LIPID[n][2] + (' −' * abs(LIPID[n][1]) if LIPID[n][1] else '') for n in names]
+    for lab, col in extra:
+        hs.append(Line2D([], [], ls='none', marker='s', ms=9, mfc=col, mec=PROT_EDGE, mew=0.5)); labs.append(lab)
+    return hs, labs
+
+
+def fig_raft_domains():
+    """Balsa lipidica (fase Lo) cercada de fase Ld, com um receptor dentro da balsa."""
+    fig, ax = plt.subplots(figsize=(12, 4.7))
+    n, raft = 32, (11, 21)
+    for i in range(n):
+        x = i + 0.5
+        inside = raft[0] <= i < raft[1]
+        if inside and i in (15, 16):
+            continue                                   # lugar do receptor
+        for up in (True, False):
+            if inside:
+                h = 2.05 if up else -2.05
+                if (i + (0 if up else 1)) % 3 == 0:
+                    _chol(ax, x, h, up, tlen=1.0)
+                else:
+                    _lip(ax, x, h, up, LIPID['SM'][0], tail='sat', tlen=1.5)
+            else:
+                h = 1.75 if up else -1.75
+                kind = 'mono' if i % 2 else 'pufa'
+                col = LIPID['PC'][0] if up else (LIPID['PE'][0] if i % 3 else LIPID['PS'][0])
+                _lip(ax, x, h, up, col, q=-1 if col == LIPID['PS'][0] else 0, tail=kind, tlen=1.15)
+    # receptor de passagem unica: dominio extracelular, helice TM, dominio de quinase
+    _helix(ax, 16.0, -2.4, 2.4, w=0.55)
+    ax.add_patch(matplotlib.patches.Ellipse((16.0, 3.35), 2.0, 1.4, fc=PROT, ec=PROT_EDGE, lw=0.8, zorder=5))
+    ax.add_patch(matplotlib.patches.Ellipse((16.0, -3.3), 1.8, 1.2, fc=PROT, ec=PROT_EDGE, lw=0.8, zorder=5))
+    ax.text(16.0, 3.35, 'receptor', ha='center', va='center', fontsize=8, color='white', zorder=6)
+    ax.text(16.0, -3.3, 'quinase', ha='center', va='center', fontsize=8, color='white', zorder=6)
+    _water(ax, 0, n, 2.4, -2.4, h=1.9)
+    # chaves de fase
+    for (a, b), lab in (((0.2, 10.8), 'fase Ld: fosfolipídios insaturados, desordenada, mais fina'),
+                        ((11.2, 20.8), 'balsa (fase Lo): SM + colesterol, caudas saturadas, mais espessa'),
+                        ((21.2, 31.8), 'fase Ld')):
+        ax.annotate('', xy=(a, 4.55), xytext=(b, 4.55), arrowprops=dict(arrowstyle='|-|', color=INK, lw=0.8,
+                                                                          shrinkA=0, shrinkB=0, mutation_scale=3))
+        ax.text((a + b) / 2, 4.8, lab, ha='center', va='bottom', fontsize=8.5, color=INK)
+    ax.set_xlim(0, 35.5); ax.set_ylim(-4.4, 5.6); ax.set_aspect('equal'); frame_off(ax)
+    ax.set_title('Domínios laterais: uma balsa lipídica concentra receptores (esquema)')
+    hs, labs = _lipid_handles(['PC', 'PE', 'PS', 'SM', 'CHOL'], [('Proteína', PROT)])
+    fig.legend(hs, labs, loc='lower center', ncol=6, frameon=False, fontsize=8.5, bbox_to_anchor=(0.5, 0.0))
+    fig.tight_layout(rect=(0, 0.06, 1, 1))
+    save(fig, 'fund_membrana_dominios.png')
+
+
+def fig_unsaturation():
+    """Caudas saturadas empacotam; poli-insaturadas dobram, fluidificam e sao alvo de PLA2 e de peroxidacao."""
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5.2))
+    cases = [('Caudas saturadas (16:0, 18:0)', 'sat', 0.62, LIPID['PC'][0],
+              ['empacotamento denso, membrana mais rígida', 'sem duplas ligações: resiste à peroxidação']),
+             ('Caudas poli-insaturadas (20:4, araquidonato)', 'pufa', 0.95, LIPID['PE'][0],
+              ['dobras cis: menos empacotamento, membrana fluida', 'PLA2 libera 20:4: prostaglandinas e leucotrienos',
+               'duplas ligações oxidam: peroxidação e ferroptose'])]
+    for ax, (title, kind, step, col, notes) in zip(axes, cases):
+        n = int(9 / step)
+        for i in range(n):
+            x = 0.6 + i * step
+            for up in (True, False):
+                _lip(ax, x, 1.75 if up else -1.75, up, col, tail=kind, tlen=1.25, r=0.28)
+        _water(ax, 0, 9.6, 2.1, -2.1, h=0.9, labels=None)
+        for k, s in enumerate(notes):
+            ax.text(5.0, -3.35 - 0.55 * k, s, ha='center', va='center', fontsize=9, color=INK)
+        ax.set_xlim(0, 10); ax.set_ylim(-5.0, 3.2); ax.set_aspect('equal'); frame_off(ax)
+        ax.set_title(title, fontsize=10.5)
+    fig.suptitle('Insaturação das caudas: empacotamento, fluidez e química (esquema)', fontsize=11, y=0.99)
+    fig.tight_layout(rect=(0, 0, 1, 0.96))
+    save(fig, 'fund_insaturacao.png')
+
+
+def fig_membrane_proteins():
+    """Receptor acoplado a proteina G, receptor tirosina-quinase e transportador ABC na mesma bicamada."""
+    fig, ax = plt.subplots(figsize=(12.5, 4.9))
+    n = 36
+    occupied = set(range(3, 10)) | {17, 18} | set(range(25, 33))
+    for i in range(n):
+        if i in occupied:
+            continue
+        x = i + 0.5
+        _lip(ax, x, 1.75, True, LIPID['PC'][0] if i % 4 else LIPID['SM'][0], tail='mono' if i % 2 else 'sat')
+        _lip(ax, x, -1.75, False, LIPID['PE'][0] if i % 3 else LIPID['PS'][0],
+             q=0 if i % 3 else -1, tail='pufa' if i % 2 else 'mono')
+    # GPCR: 7 helices transmembrana
+    for k in range(7):
+        _helix(ax, 3.7 + k * 0.95, -2.3 + 0.12 * (k % 2), 2.3 - 0.12 * (k % 2), w=0.62)
+    ax.add_patch(matplotlib.patches.Ellipse((6.6, -2.95), 2.2, 1.0, fc='#c9a227', ec=PROT_EDGE, lw=0.8, zorder=5))
+    ax.text(6.6, -2.95, 'proteína G', ha='center', va='center', fontsize=7.5, color='white', zorder=6)
+    ax.annotate('', xy=(6.6, 2.4), xytext=(6.6, 3.4), arrowprops=dict(arrowstyle='-|>', color=INK, lw=1))
+    ax.text(6.6, 3.55, 'ligante', ha='center', va='bottom', fontsize=8, color=INK)
+    # RTK: dimero, uma helice por monomero
+    for xc in (17.5, 18.5):
+        _helix(ax, xc, -2.3, 2.3, w=0.5)
+        ax.add_patch(matplotlib.patches.Ellipse((xc, 3.0), 0.95, 1.2, fc=PROT, ec=PROT_EDGE, lw=0.8, zorder=5))
+        ax.add_patch(matplotlib.patches.Ellipse((xc, -3.0), 0.95, 1.1, fc=PROT, ec=PROT_EDGE, lw=0.8, zorder=5))
+    # transportador ABC: 12 helices em duas metades, droga saindo
+    for k in range(12):
+        xc = 25.6 + k * 0.62 + (0.5 if k >= 6 else 0)
+        _helix(ax, xc, -2.3, 2.3, w=0.5)
+    for xc in (27.2, 31.2):
+        ax.add_patch(matplotlib.patches.Ellipse((xc, -3.05), 1.7, 1.0, fc=PROT, ec=PROT_EDGE, lw=0.8, zorder=5))
+        ax.text(xc, -3.05, 'ATP', ha='center', va='center', fontsize=7.5, color='white', zorder=6)
+    ax.add_patch(Circle((29.2, -1.0), 0.28, fc=C[3], ec=INK, lw=0.5, zorder=7))
+    ax.add_patch(Circle((29.2, 3.3), 0.28, fc=C[3], ec=INK, lw=0.5, zorder=7))
+    ax.annotate('', xy=(29.2, 2.95), xytext=(29.2, -0.6), arrowprops=dict(arrowstyle='-|>', color=C[3], lw=1.4), zorder=7)
+    _water(ax, 0, n, 2.4, -2.4, h=1.6)
+    for xc, lab in ((6.6, 'GPCR: 7 hélices TM'), (18.0, 'receptor tirosina-quinase\n(EGFR): 1 hélice TM'),
+                    (29.2, 'transportador ABC (P-gp):\n12 hélices TM, expulsa fármacos')):
+        ax.text(xc, 4.45, lab, ha='center', va='bottom', fontsize=9, color=INK)
+    ax.text(n + 0.3, 0, 'núcleo\nhidrofóbico\n~3 nm', ha='left', va='center', fontsize=8, color=INK)
+    ax.set_xlim(0, n + 3.2); ax.set_ylim(-4.2, 5.7); ax.set_aspect('equal'); frame_off(ax)
+    ax.set_title('Proteínas de membrana: receptores e transportadores atravessam a bicamada com hélices (esquema)')
+    hs, labs = _lipid_handles(['PC', 'SM', 'PE', 'PS'], [('Proteína', PROT), ('Fármaco', C[3])])
+    fig.legend(hs, labs, loc='lower center', ncol=6, frameon=False, fontsize=8.5, bbox_to_anchor=(0.5, 0.0))
+    fig.tight_layout(rect=(0, 0.06, 1, 1))
+    save(fig, 'fund_proteinas_membrana.png')
+
+
+def _amp(ax, x, y, horizontal=True, L=1.7, w=0.5, flip=False):
+    """Peptideo anfipatico: metade cationica (azul, +) e metade hidrofobica (cinza)."""
+    if horizontal:
+        ax.add_patch(FancyBboxPatch((x - L / 2, y), L, w / 2, boxstyle='round,pad=0,rounding_size=0.12',
+                                    fc='#4c72b0', ec=INK, lw=0.6, zorder=6))
+        ax.add_patch(FancyBboxPatch((x - L / 2, y - w / 2), L, w / 2, boxstyle='round,pad=0,rounding_size=0.12',
+                                    fc='#b8b8b8', ec=INK, lw=0.6, zorder=6))
+        for dx in (-0.45, 0.0, 0.45):
+            ax.text(x + dx, y + w / 4, '+', ha='center', va='center', fontsize=7, color='white', zorder=7, fontweight='bold')
+    else:
+        # flip: face cationica a esquerda (peptideo do lado direito do poro)
+        xh, xc = (x, x - w / 2) if flip else (x - w / 2, x)
+        ax.add_patch(FancyBboxPatch((xh, y - L / 2), w / 2, L, boxstyle='round,pad=0,rounding_size=0.12',
+                                    fc='#b8b8b8', ec=INK, lw=0.6, zorder=6))
+        ax.add_patch(FancyBboxPatch((xc, y - L / 2), w / 2, L, boxstyle='round,pad=0,rounding_size=0.12',
+                                    fc='#4c72b0', ec=INK, lw=0.6, zorder=6))
+        for dy in (-0.45, 0.0, 0.45):
+            ax.text(xc + w / 4, y + dy, '+', ha='center', va='center', fontsize=7, color='white', zorder=7, fontweight='bold')
+
+
+def _bact_lipid(ax, x, y, up, i, **kw):
+    pg = i % 4 == 1
+    _lip(ax, x, y, up, LIPID['PG'][0] if pg else LIPID['PE'][0], q=-1 if pg else 0, tail='mono', **kw)
+
+
+def fig_amp_mechanisms():
+    """AMPs cationicos na membrana bacteriana: tapete, poro toroidal e barril."""
+    fig, axes = plt.subplots(1, 3, figsize=(13, 3.9))
+    n = 14
+    # 1. tapete: peptideos deitados na superficie aniônica
+    ax = axes[0]
+    for i in range(n):
+        for up in (True, False):
+            _bact_lipid(ax, i + 0.5, 1.75 if up else -1.75, up, i)
+    for xc in (2.2, 5.6, 9.0, 12.2):
+        _amp(ax, xc, 2.55)
+    ax.set_title('Tapete: cobrem a superfície e\ndissolvem a bicamada como detergente', fontsize=9.5)
+    # 2. poro toroidal: as cabecas acompanham a parede do poro
+    ax = axes[1]
+    gap = (5, 9)
+    for i in range(n):
+        if gap[0] <= i < gap[1]:
+            continue
+        for up in (True, False):
+            _bact_lipid(ax, i + 0.5, 1.75 if up else -1.75, up, i)
+    for side, xc in ((-1, 5.0), (1, 9.0)):
+        for k, a in enumerate(np.linspace(0.25, np.pi - 0.25, 6)):
+            hx, hy = xc - side * 0.0 + side * 0.9 * np.sin(a) * 0 + side * (0.9 * np.sin(a)), 1.75 * np.cos(a)
+            ax.add_patch(Circle((xc + side * 0.95 * np.sin(a) - side * 0.95, hy), 0.3,
+                                color=LIPID['PG'][0] if k % 3 == 1 else LIPID['PE'][0], ec=INK, lw=0.5, zorder=3))
+        _amp(ax, xc + side * 0.55, 0.0, horizontal=False, L=2.6, flip=side > 0)
+    ax.add_patch(Rectangle((5.7, -2.4), 2.6, 4.8, color='#a6cfe3', alpha=0.45, lw=0, zorder=1))
+    ax.text(7.0, 0, 'água', ha='center', va='center', fontsize=8, color=INK, rotation=90, zorder=2)
+    ax.set_title('Poro toroidal: peptídeos e cabeças\nlipídicas formam a parede do poro', fontsize=9.5)
+    # 3. barril: peptideos formam a parede, lipidios ficam planos
+    ax = axes[2]
+    gap = (5, 9)
+    for i in range(n):
+        if gap[0] <= i < gap[1]:
+            continue
+        for up in (True, False):
+            _bact_lipid(ax, i + 0.5, 1.75 if up else -1.75, up, i)
+    ax.add_patch(Rectangle((6.15, -2.4), 1.7, 4.8, color='#a6cfe3', alpha=0.45, lw=0, zorder=1))
+    for xc in (5.55, 8.45):
+        _amp(ax, xc, 0.0, horizontal=False, L=3.4, flip=xc > 7)
+    ax.text(7.0, 0, 'água', ha='center', va='center', fontsize=8, color=INK, rotation=90, zorder=2)
+    ax.set_title('Barril (barrel-stave): só peptídeos\nrevestem o canal', fontsize=9.5)
+    for ax in axes:
+        _water(ax, 0, n, 2.1, -2.1, h=1.2, labels=None)
+        ax.set_xlim(0, n); ax.set_ylim(-3.4, 3.6); ax.set_aspect('equal'); frame_off(ax)
+    hs, labs = _lipid_handles(['PE', 'PG'])
+    from matplotlib.lines import Line2D
+    hs += [Line2D([], [], ls='none', marker='s', ms=9, mfc='#4c72b0', mec=INK, mew=0.5),
+           Line2D([], [], ls='none', marker='s', ms=9, mfc='#b8b8b8', mec=INK, mew=0.5)]
+    labs += ['face catiônica do AMP (+)', 'face hidrofóbica do AMP']
+    fig.legend(hs, labs, loc='lower center', ncol=4, frameon=False, fontsize=8.5, bbox_to_anchor=(0.5, 0.0))
+    fig.suptitle('Peptídeos antimicrobianos (AMPs) na membrana bacteriana: três mecanismos (esquema)', fontsize=11, y=0.99)
+    fig.tight_layout(rect=(0, 0.08, 1, 0.95))
+    save(fig, 'fund_amp_membrana.png')
+
+
 def main():
     ap = argparse.ArgumentParser(description='Gera imagens/fund_*.png')
     ap.add_argument('--aa', required=True); ap.add_argument('--ua', required=True); ap.add_argument('--cg', required=True)
@@ -601,6 +852,7 @@ def main():
     fig_md_loop(); fig_force_field(); fig_timestep(); fig_pbc()
     fig_resolutions(a.aa, a.ua, a.cg); fig_scales(); fig_mapping_lj(); fig_landscape_2d(); fig_clocks()
     fig_residue_mapping(a.aa, a.cg); fig_em_vs_md(); fig_cost(); fig_funnel(); fig_cell_membranes()
+    fig_raft_domains(); fig_unsaturation(); fig_membrane_proteins(); fig_amp_mechanisms()
     if a.mem_xtc:
         fig_self_assembly(a.mem_xtc, a.mem_gro)
 
