@@ -495,7 +495,7 @@ Ao agrupar átomos em beads, o modelo CG **integra** os graus de liberdade remov
 | Entropia dos graus removidos fica embutida nos parâmetros | o balanço entalpia-entropia vale para a faixa de temperatura da parametrização |
 | Na proteína, a rede elástica cria um vale único em torno da estrutura inicial | sem enovelamento nem troca de estrutura secundária |
 
-O gráfico abaixo é um **esquema ilustrativo** (funções analíticas, não resultado de simulação) da mesma coordenada de reação nas três resoluções.
+O gráfico abaixo é um **esquema ilustrativo** (funções analíticas, não resultado de simulação) da mesma coordenada de reação nas quatro resoluções. A curva quântica (QM) é a mais rugosa: além de tudo o que o all-atom descreve, ela resolve os elétrons (polarização, formação e quebra de ligações), e cada passo de descida de resolução alisa a paisagem.
 ''')
 
 code('''
@@ -504,14 +504,17 @@ x = np.linspace(-1.6, 1.6, 1200)
 base = 4 * (x**2 - 1)**2                                   # dois vales e uma barreira
 rough_aa = 0.9 * np.sin(23 * x) + 0.6 * np.sin(41 * x + 1.3)
 rough_ua = 0.6 * np.sin(19 * x + 0.4) + 0.3 * np.sin(37 * x)
-curves = {'All-atom': base + rough_aa + 1.2 * np.exp(-x**2 / 0.05),
+rough_qm = 0.7 * np.sin(67 * x + 0.7) + 0.5 * np.sin(89 * x + 2.1)   # detalhe eletronico: polarizacao, ligacoes
+curves = {'Quântica (QM)': base + rough_aa + rough_qm + 2.6 * np.exp(-x**2 / 0.03),
+          'All-atom': base + rough_aa + 1.2 * np.exp(-x**2 / 0.05),
           'United-atom': base + rough_ua + 0.8 * np.exp(-x**2 / 0.06),
           'Coarse-grained': 0.6 * base}
-fig, ax = plt.subplots(figsize=(9, 3.8))
-for (name, y), color in zip(curves.items(), palette.series(3)):
+fig, ax = plt.subplots(figsize=(10, 3.8))
+for (name, y), color in zip(curves.items(), palette.series(4)):
     ax.plot(x, y - y.min(), color=color, lw=1.6, label=name)
-finish(ax, title='Mesma coordenada de reação em três resoluções', subtitle='esquema ilustrativo',
-                xlabel='Coordenada de reação', ylabel='Energia livre (unidades arbitrárias)')
+finish(ax, title='Mesma coordenada em quatro resoluções',
+       xlabel='Coordenada de reação', ylabel='Energia livre (unidades demonstrativas)', legend=False)
+ax.legend(frameon=False, loc='upper left', bbox_to_anchor=(1.01, 1))
 ax.set_yticks([])
 plt.show()
 ''')
