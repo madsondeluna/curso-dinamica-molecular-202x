@@ -4,7 +4,7 @@ Material de aula com dois notebooks executáveis no Google Colab.
 
 | Notebook | Resolução | Sistemas | Colab |
 |----------|-----------|----------|-------|
-| `MD_GMX.ipynb` | all-atom, CHARMM36m | ubiquitina (1UBQ) em água | <a href="https://colab.research.google.com/github/madsondeluna/aula_dinamica_molecular/blob/main/MD_GMX.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
+| `MD_GMX.ipynb` | all-atom, CHARMM36m | ubiquitina (1UBQ) em água | <a href="https://colab.research.google.com/drive/1mNCWToj7F1zcLeahWdKIuU3ttugzDtsq?usp=sharing" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
 | `MD_Martini.ipynb` | coarse-grained, Martini 3 | ubiquitina (1UBQ) em água; automontagem de bicamada de DSPC | <a href="https://colab.research.google.com/github/madsondeluna/aula_dinamica_molecular/blob/main/MD_Martini.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
 
 O notebook atomístico segue o Exercício 1 de Lemkul (2024). O notebook Martini usa a mesma proteína, para comparar as resoluções, e reproduz o tutorial oficial de automontagem de bicamada do Martini 3.
@@ -21,7 +21,6 @@ O notebook atomístico segue o Exercício 1 de Lemkul (2024). O notebook Martini
 - [Notebook 2: Martini 3](#notebook-2-martini-3)
 - [Réplicas e sementes](#réplicas-e-sementes)
 - [Tipos de arquivos GROMACS](#tipos-de-arquivos-gromacs)
-- [Exercícios 2 e 3 do artigo (referência)](#exercícios-2-e-3-do-artigo-referência)
 - [Possíveis erros e soluções](#possíveis-erros-e-soluções)
 - [Referências](#referências)
 
@@ -364,21 +363,6 @@ Uso em aula: cada grupo escolhe uma `REPLICA`, com `USE_PRECOMPUTED = True` para
 | `.cpt` | checkpoint para retomar a simulação |
 | `.ndx` | grupos de índice |
 | `.xvg` | séries de dados das ferramentas de análise |
-
-
-## Exercícios 2 e 3 do artigo (referência)
-
-Não implementados nos notebooks; procedimento completo em Lemkul (2024).
-
-| Exercício | Sistema | PDB | Conteúdo |
-|-----------|---------|-----|----------|
-| 2 | Complexo InaD:NorpA | [1IHJ](https://www.rcsb.org/structure/1IHJ) | extração de cadeias, caps ACE/NME, dissulfeto intermolecular Cys31-Cys6, `pdb2gmx -merge all -ter`, `genion -neutral` |
-| 3 | Chignolin | [1UAO](https://www.rcsb.org/structure/1UAO) | pulling Cα Gly1-Gly10 (0,005 nm/ps, 2000 kJ/mol/nm²), 26 janelas de 0,5 a 3,0 nm, PMF com `gmx wham` |
-
-```bash
-gmx pdb2gmx -f 1ihj_chainAD_capped.pdb -o complex.gro -water tip3p -ter -merge all
-gmx wham -it tpr_files.dat -if pullf_files.dat -o pmf.xvg -hist hist.xvg -unit kJ
-```
 
 
 ## Possíveis erros e soluções
