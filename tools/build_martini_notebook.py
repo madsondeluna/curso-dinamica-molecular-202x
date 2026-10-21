@@ -53,7 +53,7 @@ md('''
 md('''
 ## Antes de começar: mantenha a sessão viva e salve no Drive
 
-Execute as três células abaixo **antes de qualquer outra coisa**. A primeira reinicia o ambiente sozinha se ele já tiver sido usado (o Colab pode mostrar o aviso de que a sessão travou: é esperado); nesse caso, rode **Ambiente de execução > Executar tudo** de novo. Com o Drive montado, todos os arquivos ficam em `MyDrive/aula_martini/repN`.
+Execute as três células abaixo **antes de qualquer outra coisa**. A primeira reinicia o ambiente sozinha se ele já tiver sido usado: a execução para com a mensagem *Ambiente reiniciado* (o Colab pode avisar que a sessão travou, é esperado). Nesse caso, rode **Ambiente de execução > Executar tudo** de novo. Com o Drive montado, todos os arquivos ficam em `MyDrive/aula_martini/repN`.
 
 **GPU.** Para simular do zero (`USE_PRECOMPUTED = False`), escolha **Ambiente de execução > Alterar o tipo de ambiente de execução > T4 GPU** antes de executar. O notebook detecta a GPU e a usa no `mdrun` quando o GROMACS instalado tem suporte; sem GPU, ou sem suporte, a simulação roda na CPU. Com a réplica pré-computada, a GPU não faz diferença.
 
@@ -64,16 +64,16 @@ Execute as três células abaixo **antes de qualquer outra coisa**. A primeira r
 ''')
 
 code('''
-# Reinicio limpo: se este kernel ja executou outras celulas, reinicia o ambiente.
+# Reinicio limpo: se esta celula ja rodou neste ambiente, reinicia o Python antes de recomecar.
 # Variaveis e modulos de uma execucao anterior causam erros ao recomecar do inicio.
 # Os arquivos em /content e no Drive continuam la; so a memoria do Python e limpa.
-import sys
-_ip = get_ipython()
-if 'google.colab' in sys.modules and _ip.execution_count > 1:
-    print('Ambiente ja usado: reiniciando. Depois, execute de novo: Ambiente de execucao > Executar tudo.')
-    _ip.kernel.do_shutdown(True)
-else:
-    print('Ambiente limpo: pode seguir.')
+import os, sys, threading
+if 'google.colab' in sys.modules and globals().get('_AULA_INICIADA'):
+    # o erro abaixo interrompe o "Executar tudo"; 1 s depois o processo sai e o Colab sobe um ambiente novo
+    threading.Timer(1.0, os._exit, args=(0,)).start()
+    raise SystemExit('Ambiente reiniciado. Execute de novo: Ambiente de execucao > Executar tudo.')
+_AULA_INICIADA = True
+print('Ambiente limpo: pode seguir.')
 ''')
 
 code('''
