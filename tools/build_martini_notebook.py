@@ -51,9 +51,9 @@ md('''
 ''')
 
 md('''
-## Antes de começar: ambiente limpo e sessão ativa
+## Antes de começar: sessão ativa e parâmetros
 
-Execute as três células abaixo **antes de qualquer outra coisa**. A primeira reinicia o ambiente sozinha se ele já tiver sido usado: a execução para com a mensagem *Ambiente reiniciado* (o Colab pode avisar que a sessão travou, é esperado). Nesse caso, rode **Ambiente de execução > Executar tudo** de novo. Tudo vem do GitHub e os arquivos ficam em `/content/aula_martini/repN`, apagados quando a sessão termina.
+Execute as duas células abaixo **antes de qualquer outra coisa**. Tudo vem do GitHub e os arquivos ficam em `/content/aula_martini/repN`, apagados quando a sessão termina.
 
 **GPU.** Para simular do zero (`USE_PRECOMPUTED = False`), escolha **Ambiente de execução > Alterar o tipo de ambiente de execução > T4 GPU** antes de executar. O notebook detecta a GPU e a usa no `mdrun` quando o GROMACS instalado tem suporte; sem GPU, ou sem suporte, a simulação roda na CPU. Com a réplica pré-computada, a GPU não faz diferença.
 
@@ -61,19 +61,6 @@ Execute as três células abaixo **antes de qualquer outra coisa**. A primeira r
 |-----------|--------------|--------|
 | `REPLICA` | `1` | qual das três réplicas usar (1, 2 ou 3); cada uma tem sementes aleatórias diferentes |
 | `USE_PRECOMPUTED` | `True` | baixa do GitHub a réplica já simulada: todas as etapas aparecem como "ja pronto" e os cartões e gráficos saem na hora. Com `False`, o notebook simula tudo no Colab (2 a 3 h) | Ao reabrir o notebook, cada etapa já concluída é detectada e reaproveitada; uma simulação interrompida continua do último checkpoint em vez de recomeçar.
-''')
-
-code('''
-# Reinicio limpo: se esta celula ja rodou neste ambiente, reinicia o Python antes de recomecar.
-# Variaveis e modulos de uma execucao anterior causam erros ao recomecar do inicio.
-# Os arquivos em /content continuam la; so a memoria do Python e limpa.
-import os, sys, threading
-if 'google.colab' in sys.modules and globals().get('_AULA_INICIADA'):
-    # o erro abaixo interrompe o "Executar tudo"; 1 s depois o processo sai e o Colab sobe um ambiente novo
-    threading.Timer(1.0, os._exit, args=(0,)).start()
-    raise SystemExit('Ambiente reiniciado. Execute de novo: Ambiente de execucao > Executar tudo.')
-_AULA_INICIADA = True
-print('Ambiente limpo: pode seguir.')
 ''')
 
 code('''
@@ -513,6 +500,8 @@ md('''
 # Parte A: Ubiquitina em Água (1UBQ)
 
 **Nesta parte você vai:** converter uma proteína real em modelo Martini, colocá-la numa caixa de água com sal, simular 15 ns e medir quanto cada região se move.
+
+**Passo a passo da proteína, com todos os comandos e programas para rodar fora do Colab:** [guias/proteina.md](https://github.com/madsondeluna/curso-dinamica-molecular-202x/blob/main/guias/proteina.md)
 
 **Por que a ubiquitina.** É uma proteína pequena (76 resíduos) presente em todas as células eucarióticas. Ela funciona como uma etiqueta: enzimas ligam a Gly76 da cauda C-terminal a lisinas de outras proteínas. Cadeias de ubiquitina ligadas pela Lys48 marcam a proteína para ser degradada pelo proteassomo. Esse sistema de degradação é alvo terapêutico: o bortezomibe, inibidor do proteassomo, foi aprovado em 2003 para o tratamento do mieloma múltiplo (Bross *et al.*, 2004). Na análise, você vai ver que a cauda C-terminal é justamente a parte mais móvel da proteína.
 
@@ -1010,6 +999,8 @@ md('''
 # Parte B: Automontagem de uma Bicamada Lipídica (DSPC)
 
 **Nesta parte você vai:** espalhar 128 lipídios ao acaso numa caixa de água, deixar a simulação correr e ver a membrana se formar sozinha; depois medir sua espessura e a área de cada lipídio.
+
+**Passo a passo da membrana, com todos os comandos e programas para rodar fora do Colab:** [guias/membrana.md](https://github.com/madsondeluna/curso-dinamica-molecular-202x/blob/main/guias/membrana.md)
 
 **Por que isso importa.** Toda célula é delimitada por uma bicamada lipídica, e ninguém a monta peça por peça: ela se forma porque as caudas apolares evitam a água. É o mesmo princípio que forma lipossomos, as vesículas usadas para entregar fármacos e as vacinas de mRNA em nanopartículas lipídicas.
 

@@ -27,6 +27,7 @@ Material de aula executável no Google Colab: uma proteína e uma membrana que s
 - [4. Quanto custa cada resolução](#4-quanto-custa-cada-resolução)
 - [5. Parte A: ubiquitina em Martini 3](#5-parte-a-ubiquitina-em-martini-3)
 - [6. Parte B: automontagem de uma bicamada](#6-parte-b-automontagem-de-uma-bicamada)
+- Passo a passo: [proteína](guias/proteina.md) · [membrana](guias/membrana.md)
 - [Membranas reais: células normais, de câncer e bactérias](#membranas-reais-células-normais-de-câncer-e-bactérias)
 - [7. Réplicas e sementes](#7-réplicas-e-sementes)
 - [Material legado: curso atomístico](#material-legado-curso-atomístico)
@@ -42,15 +43,15 @@ Material de aula executável no Google Colab: uma proteína e uma membrana que s
 | 2 | A mesma molécula em quatro resoluções; mapeamento 4:1 | seção 2 |
 | 3 | Paisagem energética, funil e por que os relógios não se comparam | seção 3 |
 | 4 | Custo de cada resolução | seção 4 |
-| 5 | Prática: ubiquitina coarse-grained, do PDB à análise | `MD_Martini.ipynb`, Parte A |
-| 6 | Prática: lipídios aleatórios formando uma bicamada | `MD_Martini.ipynb`, Parte B |
+| 5 | Prática: ubiquitina coarse-grained, do PDB à análise | `MD_Martini.ipynb`, Parte A; [passo a passo](guias/proteina.md) |
+| 6 | Prática: lipídios aleatórios formando uma bicamada | `MD_Martini.ipynb`, Parte B; [passo a passo](guias/membrana.md) |
 | 6b | Membranas reais: células normais, de câncer e bactérias; peptídeos antimicrobianos | seção *Membranas reais* |
 | 7 | Três réplicas: o que se repete e o que é acaso | seção 7; seção de réplicas do notebook |
 
 
 ## Como usar no Google Colab
 
-Requisitos: conta Google e navegador. Nada é instalado no computador. Clique no botão do notebook, faça login e execute as células em ordem (`Shift + Enter`). As primeiras células reiniciam o ambiente se ele já tiver sido usado e mantêm a sessão ativa. Tudo vem do GitHub: não é preciso montar o Google Drive.
+Requisitos: conta Google e navegador. Nada é instalado no computador. Clique no botão do notebook, faça login e execute as células em ordem (`Shift + Enter`). As primeiras células mantêm a sessão ativa e definem os parâmetros. Tudo vem do GitHub: não é preciso montar o Google Drive.
 
 O Colab baixa tudo deste repositório público: parâmetros, visualizadores, as três réplicas já simuladas e as imagens.
 
@@ -195,6 +196,8 @@ Aplicando o fator de custo aos 14 min da ubiquitina, os mesmos 15 ns levariam da
 
 ## 5. Parte A: ubiquitina em Martini 3
 
+Passo a passo com todos os comandos, parâmetros e análises: [guias/proteina.md](guias/proteina.md).
+
 **Por que a ubiquitina.** É uma proteína pequena (76 resíduos, carga líquida zero) presente em todas as células eucarióticas. Ela funciona como etiqueta: enzimas ligam a Gly76 da cauda C-terminal a lisinas de outras proteínas, e cadeias ligadas pela Lys48 marcam a proteína para degradação no proteassomo. Esse sistema é alvo terapêutico: o bortezomibe, inibidor do proteassomo, foi aprovado em 2003 para o mieloma múltiplo (Bross *et al.*, 2004). É a mesma proteína do curso atomístico (material legado). Cada etapa do notebook termina com um cartão de etapa: visualização 3D interativa, explicação, números do sistema e a mesma etapa nas três resoluções.
 
 | Etapa | Comando ou arquivo | Valor |
@@ -238,6 +241,8 @@ Nas três réplicas, a rede elástica mantém o enovelamento (RMSD de 0,17 a 0,2
 
 
 ## 6. Parte B: automontagem de uma bicamada
+
+Passo a passo com todos os comandos, parâmetros e análises: [guias/membrana.md](guias/membrana.md).
 
 Lipídios distribuídos ao acaso em água se organizam sozinhos em bicamada, guiados pelo efeito hidrofóbico. Na Parte A a estrutura estava dada; aqui nada é imposto. É o mesmo princípio que forma as membranas das células, os lipossomos usados para entregar fármacos e as nanopartículas lipídicas das vacinas de mRNA.
 
@@ -471,14 +476,15 @@ constraints     = h-bonds
 | Caminho | Conteúdo |
 |---------|----------|
 | `MD_Martini.ipynb` | notebook coarse-grained (gerado por `tools/build_martini_notebook.py`) |
+| `guias/proteina.md`, `guias/membrana.md` | passo a passo com comandos, parâmetros e análises |
 | `legado/` | curso atomístico anterior: `MD_GMX.ipynb`, `mdp/`, artigo de Lemkul (2024) |
 | `mdp_martini/` | `minim.mdp`, `ions.mdp`, `npt_prot.mdp`, `md_prot.mdp`, `md_membrane.mdp`, `md_membrane_eq.mdp` |
-| `viz/stage_viewer.py`, `viz/stage.css`, `viz/pure/` | cartões de etapa e tema dos gráficos |
+| `viz/simple_view.py`, `viz/pure/` | visualizadores 3D das etapas e paleta dos gráficos |
 | `viz/replica_plots.py` | gráficos de réplicas e de média ± DP |
 | `viz/replica_views.py` | visualizadores 3D das réplicas (bastões nas ligações CG, cores do `vmd_view.sh` do AMP-evo-MD) |
 | `results/repN.tar.gz` | as três réplicas simuladas, todas as etapas |
 | `results/summary_repN.json` | séries e valores finais de cada réplica |
-| `results/viz/repN_*.pdb` | estruturas e animações com ligações CG para os visualizadores 3D |
+| `results/viz/repN_*.pdb`, `results/viz/repN_*.xyz` | estruturas e animações com ligações CG (`.pdb`) e água (`.xyz`) para os visualizadores 3D |
 | `results/pack_results.sh` | empacota e anonimiza as réplicas |
 | `imagens/fund_*.png` | ilustrações dos fundamentos (`tools/make_figures.py`) |
 | `imagens/martini_*.png` | réplicas: um gráfico por métrica, valores finais e vistas ortográficas (`tools/make_replica_figures.py`) |
