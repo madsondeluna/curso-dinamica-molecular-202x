@@ -110,7 +110,7 @@ def fig_md_loop():
     ax.text(0, 0.62, '$t$', color=INK, fontsize=8.5, ha='center')
     ax.text(0.9, 0.62, '$t+\\Delta t$', color=INK, fontsize=8.5, ha='center', alpha=0.7)
     ax.text(0, -1.05, 'repete a cada passo $\\Delta t$', ha='center', va='center', fontsize=10, color=INK)
-    ax.text(0, -1.42, 'AA 2 fs  ·  Martini 20 fs', ha='center', va='center', fontsize=9, color=INK, alpha=0.7)
+    ax.text(0, -1.42, 'AA 2 fs  ·  UA 2 fs  ·  Martini 20 fs', ha='center', va='center', fontsize=9, color=INK, alpha=0.7)
     ax.set_title('Ciclo de integração da dinâmica molecular (leap-frog)')
     save(fig, 'fund_ciclo_md.png')
 
@@ -305,12 +305,13 @@ def fig_mapping_lj():
     ax.set_xlim(-0.5, 0.6); ax.set_ylim(-0.4, 0.5); ax.set_aspect('equal'); frame_off(ax)
     ax.set_title('Mapeamento 4:1: quatro H₂O viram um bead W')
     ax = axes[1]; r = np.linspace(0.25, 1.2, 500)
-    for (lab, s, e, col, ls) in (('O-O, TIP3P (σ 0,315 nm; ε 0,64 kJ/mol)', 0.315, 0.636, C[0], '-'),
+    for (lab, s, e, col, ls) in (('O-O, TIP3P, all-atom (σ 0,315 nm; ε 0,64 kJ/mol)', 0.315, 0.636, C[0], '-'),
+                                 ('O-O, SPC, united-atom (σ 0,317 nm; ε 0,65 kJ/mol)', 0.3166, 0.650, C[3], (0, (2, 2))),
                                  ('W-W, Martini 3 (σ 0,47 nm; ε 4,65 kJ/mol)', 0.47, 4.65, C[6], (0, (6, 3)))):
         ax.plot(r, 4 * e * ((s / r) ** 12 - (s / r) ** 6), color=col, ls=ls, label=lab)
     ax.axhline(0, color=INK, lw=0.6)
     ax.set(ylim=(-5.5, 5), xlabel='Distância (nm)', ylabel='U (kJ/mol)', title='Lennard-Jones: átomo × bead')
-    ax.legend(loc='lower right', fontsize=8)
+    ax.legend(loc='upper right', fontsize=7.5, frameon=False, borderaxespad=0.6)
     save(fig, 'fund_mapeamento_lj.png')
 
 
@@ -342,7 +343,9 @@ def fig_landscape_2d():
 def fig_clocks():
     """Dinamica de Langevin superamortecida em 1D: mesma barreira, rugosidade diferente."""
     rng = np.random.default_rng(11)
-    kT, dt, n = 1.0, 2e-4, 400000
+    kT, dt, n = 1.0, 2e-4, 1000000
+    # mesmo ruido nas quatro paisagens: a diferenca nas travessias vem so da forma da paisagem
+    noise = rng.standard_normal(n) * np.sqrt(2 * kT * dt)
 
     def U(x, rough, fine=0.0):
         return (3 * (x ** 2 - 1) ** 2 * (0.6 if rough == 0 else 1) + rough * (0.9 * np.sin(23 * x) + 0.6 * np.sin(41 * x + 1.3))
@@ -353,7 +356,6 @@ def fig_clocks():
 
     def run(rough, fine):
         x = np.empty(n); x[0] = -1.0
-        noise = rng.standard_normal(n) * np.sqrt(2 * kT * dt)
         for i in range(1, n):
             x[i] = x[i - 1] - dU(x[i - 1], rough, fine) * dt + noise[i]
         return x
@@ -369,19 +371,19 @@ def fig_clocks():
 
     xs = np.linspace(-1.7, 1.7, 600)
     traj = {'QM (a mais rugosa)': (1.0, 1.0, C[2]), 'All-atom (rugosa)': (1.0, 0.0, C[0]),
-            'Coarse-grained (lisa)': (0.0, 0.0, C[1])}
-    fig = plt.figure(figsize=(13, 9.0))
-    gs = fig.add_gridspec(3, 2, width_ratios=[1, 2.4], hspace=0.55, wspace=0.18)
+            'United-atom (menos rugosa)': (0.55, 0.0, C[3]), 'Coarse-grained (lisa)': (0.0, 0.0, C[1])}
+    fig = plt.figure(figsize=(13, 11.8))
+    gs = fig.add_gridspec(4, 2, width_ratios=[1, 2.4], hspace=0.6, wspace=0.18)
     for k, (name, (rough, fine, col)) in enumerate(traj.items()):
         axl = fig.add_subplot(gs[k, 0]); axr = fig.add_subplot(gs[k, 1])
         u = U(xs, rough, fine)
         axl.plot(xs, u - u.min(), color=col)
         axl.set(title=name, xlabel='x', ylabel='U / kT', ylim=(0, 8))
         x = run(rough, fine)
-        steps = np.arange(n)[::40]
-        axr.plot(steps, x[::40], color=col, lw=0.5)
+        steps = np.arange(n)[::100] / 1e6
+        axr.plot(steps, x[::100], color=col, lw=0.5)
         axr.axhline(0, color=INK, lw=0.5, ls=(0, (4, 3)))
-        axr.set(ylabel='x', xlabel='Passos de integração' if k == len(traj) - 1 else None, ylim=(-1.8, 1.8),
+        axr.set(ylabel='x', xlabel='Passos de integração (milhões)' if k == len(traj) - 1 else None, ylim=(-1.8, 1.8),
                 title=f'{crossings(x)} travessias da barreira em {n:,} passos'.replace(',', ' '))
     fig.suptitle('Mesmo número de passos, relógios diferentes (modelo de brinquedo, dinâmica de Langevin)',
                  y=1.0, fontsize=11)
@@ -389,21 +391,28 @@ def fig_clocks():
 
 
 # ---------------------------------------------------------------- 10. mapeamento de varios residuos
-def fig_residue_mapping(aa, cg, picks=(('GLY', 10), ('ALA', 28), ('LEU', 8), ('LYS', 6), ('ARG', 42), ('PHE', 45), ('TYR', 59))):
-    fig, axes = plt.subplots(1, len(picks), figsize=(2.6 * len(picks), 3.6))
-    for ax, (name, resid) in zip(axes, picks):
+def fig_residue_mapping(aa, ua, cg, picks=(('GLY', 10), ('ALA', 28), ('LEU', 8), ('LYS', 6), ('ARG', 42), ('PHE', 45), ('TYR', 59))):
+    fig, axes = plt.subplots(2, len(picks), figsize=(2.6 * len(picks), 6.6))
+    for k, (name, resid) in enumerate(picks):
         A = [(n, x) for n, x in read_res(aa, resid, 'gro')]
+        U = [(n, x) for n, x in read_res(ua, resid, 'gro')]
         G = read_res(cg, resid, 'pdb')
         heavy = np.array([x for n, x in A if not n.startswith('H')])
-        PA, PG = project(A, heavy), project(G, heavy)
-        for (n, _), p in zip(G, PG):
-            ax.add_patch(Circle(p, 2.35 if n == 'BB' else 2.0, color=C[1] if n == 'BB' else C[2], alpha=0.35, lw=0))
-        for (n, _), p in zip(A, PA):
-            ax.scatter(*p, s=12 if n.startswith('H') else 34, color=C[0] if n.startswith('H') else INK, zorder=3, lw=0)
-        ax.set_xlim(-6.5, 6.5); ax.set_ylim(-5, 5); ax.set_aspect('equal'); frame_off(ax)
-        nh = sum(1 for n, _ in A if not n.startswith('H'))
-        ax.set_title(f'{name}{resid}\n{nh} pesados, {len(A)} átomos\n{len(G)} bead' + ('s' if len(G) > 1 else ''), fontsize=9)
-    fig.suptitle('Mapeamento Martini 3 de resíduos da ubiquitina: amarelo BB, magenta cadeia lateral', y=0.98, fontsize=11)
+        PG = project(G, heavy)
+        for row, (atoms, label) in enumerate(((A, 'átomos'), (U, 'partículas'))):
+            ax = axes[row, k]
+            for (n, _), p in zip(G, PG):
+                ax.add_patch(Circle(p, 2.35 if n == 'BB' else 2.0, color=C[1] if n == 'BB' else C[2], alpha=0.35, lw=0))
+            for (n, _), p in zip(atoms, project(atoms, heavy)):
+                ax.scatter(*p, s=12 if n.startswith('H') else 34, color=C[0] if n.startswith('H') else INK, zorder=3, lw=0)
+            ax.set_xlim(-6.5, 6.5); ax.set_ylim(-5, 5); ax.set_aspect('equal'); frame_off(ax)
+            nH = sum(1 for n, _ in atoms if n.startswith('H'))
+            head = f'{name}{resid}\n' if row == 0 else ''
+            ax.set_title(f'{head}{len(atoms)} {label} ({nH} H)\n{len(G)} bead' + ('s' if len(G) > 1 else ''), fontsize=9)
+    axes[0, 0].text(-0.12, 0.5, 'All-atom', transform=axes[0, 0].transAxes, rotation=90, ha='center', va='center', fontsize=10)
+    axes[1, 0].text(-0.12, 0.5, 'United-atom', transform=axes[1, 0].transAxes, rotation=90, ha='center', va='center', fontsize=10)
+    fig.suptitle('Mapeamento Martini 3 de resíduos da ubiquitina sobre all-atom e united-atom: '
+                 'amarelo BB, magenta cadeia lateral, azul hidrogênios', y=1.0, fontsize=11)
     save(fig, 'fund_mapeamento_residuos.png')
 
 
@@ -857,7 +866,7 @@ def main():
     OUT.mkdir(exist_ok=True)
     fig_md_loop(); fig_force_field(); fig_timestep(); fig_pbc()
     fig_resolutions(a.aa, a.ua, a.cg); fig_scales(); fig_mapping_lj(); fig_landscape_2d(); fig_clocks()
-    fig_residue_mapping(a.aa, a.cg); fig_em_vs_md(); fig_cost(); fig_funnel(); fig_cell_membranes()
+    fig_residue_mapping(a.aa, a.ua, a.cg); fig_em_vs_md(); fig_cost(); fig_funnel(); fig_cell_membranes()
     fig_raft_domains(); fig_unsaturation(); fig_membrane_proteins(); fig_amp_mechanisms()
     if a.mem_xtc:
         fig_self_assembly(a.mem_xtc, a.mem_gro)

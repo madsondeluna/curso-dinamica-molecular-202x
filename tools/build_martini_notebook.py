@@ -448,7 +448,7 @@ Numa paisagem lisa, a mesma barreira é cruzada mais vezes no mesmo número de p
 
 ![Relógios diferentes](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_relogios.png)
 
-No modelo de brinquedo, QM e all-atom cruzam a barreira o mesmo número de vezes (9 em 400 000 passos) e o CG, 19: a rugosidade extra da QM é fina e pequena perto de kT. A diferença da QM está no custo de cada passo, que resolve os elétrons.
+Com o mesmo ruído térmico nas quatro paisagens, as travessias da barreira em 1 milhão de passos caem de 52 no coarse-grained para 32 no united-atom, 18 no all-atom e 11 na QM: cada camada de rugosidade desacelera o relógio. Na QM, cada passo também custa muito mais, porque resolve os elétrons.
 ''')
 
 md('''
@@ -1121,7 +1121,7 @@ O acoplamento de pressão é **isotrópico**: ainda não há bicamada, logo não
 
 ![Relógios diferentes](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_relogios.png)
 
-No modelo de brinquedo, QM e all-atom cruzam a barreira o mesmo número de vezes (9 em 400 000 passos) e o CG, 19: a rugosidade extra da QM é fina e pequena perto de kT. A diferença da QM está no custo de cada passo, que resolve os elétrons.
+Com o mesmo ruído térmico nas quatro paisagens, as travessias da barreira em 1 milhão de passos caem de 52 no coarse-grained para 32 no united-atom, 18 no all-atom e 11 na QM: cada camada de rugosidade desacelera o relógio. Na QM, cada passo também custa muito mais, porque resolve os elétrons.
 ''')
 
 code('''
