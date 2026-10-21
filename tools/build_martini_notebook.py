@@ -28,7 +28,7 @@ Este notebook simula dois sistemas de natureza diferente com o mesmo campo de fo
 
 A Parte A usa a mesma proteína do curso atomístico anterior (`legado/MD_GMX.ipynb`). A Parte B reproduz o tutorial oficial *Lipid bilayers, Part I: Self-assembly* do Martini 3.
 
-Cada etapa termina com um **cartão de etapa**: visualização 3D interativa (arraste para girar, role para aproximar), a explicação do que aconteceu, os números do sistema naquele momento e a mesma etapa comparada em três resoluções:
+Cada etapa termina com a visualização 3D interativa do sistema (arraste para girar, role para aproximar), a explicação do que aconteceu, os números do sistema naquele momento e a mesma etapa comparada em três resoluções:
 
 | Resolução | Partícula | Exemplo de campo de força | Usado aqui |
 |-----------|-----------|---------------------------|------------|
@@ -60,7 +60,7 @@ Execute as duas células abaixo **antes de qualquer outra coisa**. Tudo vem do G
 | Parâmetro | Valor padrão | Efeito |
 |-----------|--------------|--------|
 | `REPLICA` | `1` | qual das três réplicas usar (1, 2 ou 3); cada uma tem sementes aleatórias diferentes |
-| `USE_PRECOMPUTED` | `True` | baixa do GitHub a réplica já simulada: todas as etapas aparecem como "ja pronto" e os cartões e gráficos saem na hora. Com `False`, o notebook simula tudo no Colab (2 a 3 h) | Ao reabrir o notebook, cada etapa já concluída é detectada e reaproveitada; uma simulação interrompida continua do último checkpoint em vez de recomeçar.
+| `USE_PRECOMPUTED` | `True` | baixa do GitHub a réplica já simulada: todas as etapas aparecem como "ja pronto" e as visualizações e os gráficos saem na hora. Com `False`, o notebook simula tudo no Colab (2 a 3 h) | Ao reabrir o notebook, cada etapa já concluída é detectada e reaproveitada; uma simulação interrompida continua do último checkpoint em vez de recomeçar.
 ''')
 
 code('''
@@ -101,7 +101,7 @@ md('''
 | `vermouth` (martinize2) | Converte a proteína atomística em modelo Martini 3 |
 | `mdtraj` | DSSP para o martinize2 e análises em Python |
 | `py3Dmol` | Visualização 3D |
-| `viz/` deste repositório | Cartões de etapa e tema dos gráficos |
+| `viz/` deste repositório | Visualizadores 3D e tema dos gráficos |
 
 > **Ambiente:** todas as simulações rodam na CPU. O Colab gratuito (2 vCPUs) é suficiente.
 ''')
@@ -282,7 +282,7 @@ import matplotlib.pyplot as plt
 from pure import palette
 from replica_plots import use_paper_style, finish, COLORS
 import simple_view
-from simple_view import stage, card, style_beads, CHART, INK, BEADS, SS_COLORS
+from simple_view import stage, style_beads, CHART, INK, BEADS, SS_COLORS
 use_paper_style()                       # mesmo estilo das figuras do README
 C1 = COLORS['protein']                  # proteina: laranja
 CM = COLORS['membrane']                 # membrana: azul
@@ -595,7 +595,7 @@ print(f'All-atom (teorico): {N_AA} | united-atom (teorico): {N_UA} | Martini 3: 
 ''')
 
 code('''
-# Cartao 1: mapeamento atomistico -> CG, estruturas sobrepostas
+# Mapeamento atomistico -> CG, estruturas sobrepostas
 def mapping_style(view):
     view.setStyle({'model': 0}, {'stick': {'color': INK, 'radius': 0.12}})
     view.setStyle({'model': 1, 'atom': 'BB'}, {'sphere': {'color': BEADS['BB'][1], 'radius': 1.4, 'opacity': 0.85}})
@@ -1342,7 +1342,7 @@ if FORMED:
     groups = {'NC3': tq.select('name NC3'), 'PO4': po4e, 'GL': tq.select('name =~ "GL[12]"'),
               'Caudas': tails, 'W': tq.select('resname W')}
     gcolor = {'NC3': BEADS['NC3'][1], 'PO4': BEADS['PO4'][1], 'GL': BEADS['GL'][1],
-              'Caudas': '#8c8c8c', 'W': BEADS['W'][1]}            # mesmas cores dos cartoes
+              'Caudas': '#8c8c8c', 'W': BEADS['W'][1]}            # mesmas cores dos visualizadores 3D
     Lz = last.unitcell_lengths[:, 2]
     z = last.xyz[:, :, 2]
     # Centro da bicamada por media circular das caudas (robusto a borda periodica)

@@ -1,6 +1,6 @@
 """Visualizacao simples das etapas: estrutura em py3Dmol e explicacao em Markdown.
 
-Sem cartoes nem CSS: um visualizador com fundo branco, a agua num modelo
+Sem CSS: um visualizador com fundo branco, a agua num modelo
 separado e translucido (no 3Dmol a opacidade vale por modelo), a caixa
 periodica em linha fina e, abaixo, legenda, numeros e explicacao formatados.
 """
@@ -51,7 +51,6 @@ def style_beads(view, model=None, water=True, water_opacity=0.15, viewer=None):
 _IONS = {'NA', 'CL', 'NA+', 'CL-'}
 # cores do cartoon pela estrutura secundaria do DSSP
 SS_COLORS = {'h': ('Hélice', '#9e527f'), 's': ('Folha β', '#9f8322'), 'c': ('Alça', '#9aa0a6')}
-SS = None   # string do DSSP gravada pelo martinize2; o notebook define simple_view.SS
 
 
 def _gro_rows(text):
@@ -127,62 +126,6 @@ def _split_gro(text):
     return mk(solute), mk(ions), mk(water)
 
 
-def _ss_runs(ss, keys):
-    i = 0
-    while i < len(ss):
-        if ss[i] in keys:
-            j = i
-            while j + 1 < len(ss) and ss[j + 1] in keys:
-                j += 1
-            yield i + 1, j + 1
-            i = j + 1
-        else:
-            i += 1
-
-
-def ss_ranges(ss):
-    """Residuos (1..n) em helice e em folha segundo a string do DSSP."""
-    return {'h': [r for a, b in _ss_runs(ss, 'HGI') for r in range(a, b + 1)],
-            's': [r for a, b in _ss_runs(ss, 'E') if b > a for r in range(a, b + 1)]}
-
-
-def ss_cartoon(view, model, ss):
-    """Cartoon colorido pela estrutura secundaria do DSSP no modelo indicado."""
-    view.setStyle({'model': model}, {'cartoon': {'color': SS_COLORS['c'][1], 'thickness': 0.8, 'width': 2.2}})
-    for k, res in ss_ranges(ss).items():
-        if res:
-            view.setStyle({'model': model, 'resi': res},
-                          {'cartoon': {'color': SS_COLORS[k][1], 'thickness': 0.8, 'width': 2.2, 'arrows': k == 's'}})
-
-
-def cg_cartoon_pdb(rows, ss):
-    """PDB so de backbone a partir dos beads BB: Calfa no bead, O sintetico para orientar a fita,
-    registros HELIX/SHEET do DSSP (o 3Dmol nao calcula estrutura secundaria sem atomos de backbone)."""
-    bb = [r for r in rows if r[10:15].strip() == 'BB']
-    X = np.array([_xyz(r) for r in bb]) * 10
-    n = len(X)
-    N = np.zeros_like(X)
-    for i in range(1, n - 1):
-        v = np.cross(X[i] - X[i - 1], X[i + 1] - X[i])
-        N[i] = v / (np.linalg.norm(v) or 1)
-    N[0], N[-1] = N[1], N[-2]
-    for i in range(1, n):
-        if N[i] @ N[i - 1] < 0:
-            N[i] = -N[i]
-    out = []
-    for k, (a, b) in enumerate(_ss_runs(ss[:n], 'HGI')):
-        out.append(f'HELIX  {k + 1:3d} {k + 1:3d} ALA A {a:4d}  ALA A {b:4d}  1{"":30s}{b - a + 1:5d}')
-    for k, (a, b) in enumerate((a, b) for a, b in _ss_runs(ss[:n], 'E') if b > a):
-        out.append(f'SHEET  {k + 1:3d} {chr(65 + k % 26):>3s} 1 ALA A{a:4d}  ALA A{b:4d}  0')
-    s = 1
-    for i, r in enumerate(bb):
-        res = r[5:10].strip()[:3]
-        for name, el, x in (('CA', 'C', X[i]), ('O', 'O', X[i] + 1.4 * N[i])):
-            out.append(f'ATOM  {s:5d}  {name:<3s} {res:>3s} A{i + 1:4d}    {x[0]:8.3f}{x[1]:8.3f}{x[2]:8.3f}  1.00  0.00           {el}')
-            s += 1
-    return '\n'.join(out) + '\nEND\n'
-
-
 def _box(view, gro_text):
     try:
         a, b, c = [float(x) * 10 for x in gro_text.strip().splitlines()[-1].split()[:3]]
@@ -193,8 +136,8 @@ def _box(view, gro_text):
         view.addLine({'start': dict(zip('xyz', P[i])), 'end': dict(zip('xyz', P[j])), 'color': '#9aa0a6'})
 
 
-def show(structure, frames=False, water=True, box=True, style=None, height=440, width=820, cartoon=False):
-    """Mostra uma estrutura: proteina centrada, cartoon do DSSP, agua translucida em modelo proprio, caixa."""
+def show(structure, frames=False, water=True, box=True, style=None, height=440, width=820):
+    """Mostra uma estrutura: proteina ou bicamada centrada, agua translucida em modelo proprio, caixa."""
     text = Path(structure).read_text()
     fmt = structure.rsplit('.', 1)[-1]
     view = py3Dmol.view(width=width, height=height)
@@ -211,14 +154,6 @@ def show(structure, frames=False, water=True, box=True, style=None, height=440, 
         style(view)
     else:
         style_beads(view)
-    has_bb = fmt == 'gro' and not frames and any(r[10:15].strip() == 'BB' for r in _gro_rows(text)[1])
-    if cartoon and SS and has_bb:
-        # beads menores para o cartoon aparecer entre eles (translucidos somem atras da agua no 3Dmol)
-        for key in ('BB', 'SC'):
-            _, color, q, r = BEADS[key]
-            view.setStyle(dict(q, model=0), {'sphere': {'color': color, 'radius': 0.4 * r}})
-        view.addModel(cg_cartoon_pdb(_gro_rows(text)[1], SS), 'pdb', {'noComputeSecondaryStructure': True})
-        ss_cartoon(view, 2 if ions_text else 1, SS)
     if water and water_text:
         view.addModel(water_text, 'gro')
         # agua como lamina continua (efeito QuickSurf): esferas grandes, sobrepostas e translucidas
@@ -275,10 +210,3 @@ def stage(part, step, title, structure=None, text=(), legend=(), facts=None, com
     _explain(text=text, facts=facts, compare=compare)
 
 
-def card(eyebrow, title, figure_html, text=(), legend=(), facts=None):
-    """Visualizadores das replicas (HTML do py3Dmol) seguidos da explicacao."""
-    display(Markdown(f'#### {title}'))
-    display(HTML(white_box(figure_html)))
-    if legend:
-        _legend(legend)
-    _explain(text=text, facts=facts)

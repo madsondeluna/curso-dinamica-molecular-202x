@@ -273,7 +273,6 @@ def style_protein(view, viewer=None):
     view.setStyle({'atom': 'CL'}, {'sphere': {'color': SEM['cl'], 'radius': 1.6}}, **kw)
 
 
-_LIPID = ['NC3', 'PO4', 'GL1', 'GL2'] + _TAILS
 
 
 def style_membrane(view, viewer=None, water=True):
@@ -288,33 +287,6 @@ def style_membrane(view, viewer=None, water=True):
                                         'sphere': {'color': color, 'radius': r}}, **kw)
     view.setStyle({'atom': 'NA'}, {'sphere': {'color': SEM['na'], 'radius': 1.6}}, **kw)
     view.setStyle({'atom': 'CL'}, {'sphere': {'color': SEM['cl'], 'radius': 1.6}}, **kw)
-
-
-def triple_view(paths, kind, labels, height=420, animate=False, water=True):
-    """Tres visualizadores lado a lado, camera compartilhada; animacoes em sincronia."""
-    import py3Dmol
-    view = py3Dmol.view(width='100%', height=height, viewergrid=(1, len(paths)), linked=True)
-    for col, path in enumerate(paths):
-        v = (0, col)
-        if path is None or not Path(path).exists():
-            continue
-        text = Path(path).read_text()
-        if animate:
-            view.addModelsAsFrames(text, 'pdb', viewer=v)
-        else:
-            view.addModel(text, 'pdb', viewer=v)
-        (style_protein if kind == 'protein' else lambda vw, viewer: style_membrane(vw, viewer, water))(view, v)
-        wfile = Path(str(path).replace('mem_final', 'mem_water'))   # viz_mem_final.pdb ou repN_mem_final.pdb
-        if kind == 'membrane' and water and not animate and wfile.exists():
-            # agua em modelo proprio: no 3Dmol a opacidade vale por modelo
-            view.addModel(wfile.read_text(), 'pdb', viewer=v)
-            view.setStyle({'atom': 'W'}, {'sphere': {'color': SEM['water'], 'radius': 2.0, 'opacity': 0.35}}, viewer=v)
-        view.setBackgroundColor('#ffffff', 1, viewer=v)
-    view.zoomTo()
-    if animate:
-        view.animate({'loop': 'forward', 'reps': 0, 'interval': 180})
-    head = ''.join(f'<li class="compare-ff">{l}</li>' for l in labels)
-    return f'<ul class="compare-labels">{head}</ul>{white_box(view._make_html())}'
 
 
 def single_view(path, kind, animate=False, water_path=None, height=420, width=820):

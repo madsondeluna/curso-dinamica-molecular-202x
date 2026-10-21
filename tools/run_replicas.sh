@@ -22,7 +22,7 @@ for n in "${REPS[@]}"; do
   mkdir -p "$d/viz"
   # o GitHub pode estar atras do repositorio local: entradas copiadas daqui
   cp "$ROOT"/mdp_martini/*.mdp "$d/"
-  cp -R "$ROOT"/viz/stage_viewer.py "$ROOT"/viz/stage.css "$ROOT"/viz/replica_plots.py "$ROOT"/viz/pure "$d/viz/"
+  cp -R "$ROOT"/viz/simple_view.py "$ROOT"/viz/replica_views.py "$ROOT"/viz/replica_plots.py "$ROOT"/viz/pure "$d/viz/"
   sed -e "s/REPLICA = 1              #/REPLICA = $n              #/" \
       -e "s/USE_PRECOMPUTED = True   #/USE_PRECOMPUTED = False  #/" \
       "$ROOT/MD_Martini.ipynb" > "$RUNS/rep$n.ipynb"

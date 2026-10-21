@@ -60,7 +60,7 @@ Parâmetros na segunda célula de `MD_Martini.ipynb`:
 | Parâmetro | Padrão | Efeito |
 |-----------|--------|--------|
 | `REPLICA` | `1` | réplica usada (1, 2 ou 3); pasta `/content/aula_martini/repN` |
-| `USE_PRECOMPUTED` | `True` | baixa `results/repN.tar.gz`: todas as etapas aparecem como concluídas e os cartões, gráficos e visualizações 3D saem em poucos minutos |
+| `USE_PRECOMPUTED` | `True` | baixa `results/repN.tar.gz`: todas as etapas aparecem como concluídas e os gráficos e visualizações 3D saem em poucos minutos |
 
 | Notebook | Modo | Tempo no Colab gratuito |
 |----------|------|-------------------------|
@@ -198,7 +198,7 @@ Aplicando o fator de custo aos 14 min da ubiquitina, os mesmos 15 ns levariam da
 
 Passo a passo com todos os comandos, parâmetros e análises: [guias/proteina.md](guias/proteina.md).
 
-**Por que a ubiquitina.** É uma proteína pequena (76 resíduos, carga líquida zero) presente em todas as células eucarióticas. Ela funciona como etiqueta: enzimas ligam a Gly76 da cauda C-terminal a lisinas de outras proteínas, e cadeias ligadas pela Lys48 marcam a proteína para degradação no proteassomo. Esse sistema é alvo terapêutico: o bortezomibe, inibidor do proteassomo, foi aprovado em 2003 para o mieloma múltiplo (Bross *et al.*, 2004). É a mesma proteína do curso atomístico (material legado). Cada etapa do notebook termina com um cartão de etapa: visualização 3D interativa, explicação, números do sistema e a mesma etapa nas três resoluções.
+**Por que a ubiquitina.** É uma proteína pequena (76 resíduos, carga líquida zero) presente em todas as células eucarióticas. Ela funciona como etiqueta: enzimas ligam a Gly76 da cauda C-terminal a lisinas de outras proteínas, e cadeias ligadas pela Lys48 marcam a proteína para degradação no proteassomo. Esse sistema é alvo terapêutico: o bortezomibe, inibidor do proteassomo, foi aprovado em 2003 para o mieloma múltiplo (Bross *et al.*, 2004). É a mesma proteína do curso atomístico (material legado). Cada etapa do notebook termina com a visualização 3D do sistema, a explicação, os números do sistema e a mesma etapa nas três resoluções.
 
 | Etapa | Comando ou arquivo | Valor |
 |-------|--------------------|-------|
