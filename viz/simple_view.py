@@ -193,7 +193,7 @@ def _box(view, gro_text):
         view.addLine({'start': dict(zip('xyz', P[i])), 'end': dict(zip('xyz', P[j])), 'color': '#9aa0a6'})
 
 
-def show(structure, frames=False, water=True, box=True, style=None, height=440, width=820, cartoon=True):
+def show(structure, frames=False, water=True, box=True, style=None, height=440, width=820, cartoon=False):
     """Mostra uma estrutura: proteina centrada, cartoon do DSSP, agua translucida em modelo proprio, caixa."""
     text = Path(structure).read_text()
     fmt = structure.rsplit('.', 1)[-1]
