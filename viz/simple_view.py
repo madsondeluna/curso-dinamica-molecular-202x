@@ -163,7 +163,7 @@ def show(structure, frames=False, water=True, box=True, style=None, height=440, 
     if frames:
         view.animate({'loop': 'forward', 'reps': 0, 'interval': 150})
     view.zoomTo()
-    show_white(view)
+    show_white(view, Path(structure).stem)
 
 
 def _legend(keys):

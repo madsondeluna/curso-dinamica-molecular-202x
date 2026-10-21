@@ -24,17 +24,96 @@ SEM = {
 
 # ---------------------------------------------------------------- topologia
 
-def white_box(inner):
-    """Envolve o HTML do visualizador num bloco branco (o Colab em tema escuro pinta o fundo de preto)."""
+# Barra sob cada visualizador: escolher o quadro e baixar imagem (PNG) ou estrutura (PDB) do quadro.
+# Funciona com o py3Dmol, que declara o visualizador como variavel global viewer_<id> no HTML.
+_CONTROLS = """
+<div id="ctl_UID" style="font:13px sans-serif;color:#111827;padding:6px 8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+  <span id="ctl_UID_anim" style="display:none;align-items:center;gap:8px">
+    <button type="button" id="ctl_UID_play">Pausar</button>
+    <input type="range" id="ctl_UID_frame" min="0" max="0" value="0" style="width:220px">
+    <span id="ctl_UID_label"></span>
+  </span>
+  <button type="button" id="ctl_UID_png">Baixar imagem (PNG)</button>
+  <button type="button" id="ctl_UID_pdb">Baixar estrutura do quadro (PDB)</button>
+</div>
+<script>
+(function () {
+  var name = 'NAME';
+  function v() { return window['viewer_UID']; }
+  function el(s) { return document.getElementById('ctl_UID_' + s); }
+  function save(href, file) {
+    var a = document.createElement('a'); a.href = href; a.download = file;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  var playing = true;
+  function label() {
+    var n = v().getNumFrames(), f = v().getFrame();
+    el('label').textContent = 'quadro ' + (f + 1) + ' de ' + n;
+    el('frame').value = f;
+  }
+  var wait = setInterval(function () {
+    if (!v()) return;
+    clearInterval(wait);
+    var n = v().getNumFrames();
+    if (n > 1) {
+      el('anim').style.display = 'inline-flex';
+      el('frame').max = n - 1;
+      setInterval(function () { if (playing) label(); }, 250);
+      label();
+    }
+  }, 200);
+  el('play').onclick = function () {
+    if (playing) { v().pauseAnimate(); this.textContent = 'Continuar'; }
+    else { v().resumeAnimate(); this.textContent = 'Pausar'; }
+    playing = !playing;
+  };
+  el('frame').oninput = function () {
+    if (playing) { v().pauseAnimate(); el('play').textContent = 'Continuar'; playing = false; }
+    var f = parseInt(this.value);
+    Promise.resolve(v().setFrame(f)).then(function () { v().render(); label(); });
+  };
+  function tag() { return v().getNumFrames() > 1 ? '_quadro' + (v().getFrame() + 1) : ''; }
+  el('png').onclick = function () { v().render(); save(v().pngURI(), name + tag() + '.png'); };
+  el('pdb').onclick = function () {
+    var atoms = v().selectedAtoms({}), out = [], s = 0;
+    function pad(x, n, left) { x = String(x); while (x.length < n) x = left ? x + ' ' : ' ' + x; return x.slice(0, n); }
+    atoms.forEach(function (a) {
+      s += 1;
+      var nm = a.atom || a.elem || 'X';
+      out.push('HETATM' + pad(s % 100000, 5) + ' ' + pad(nm.length < 4 ? ' ' + nm : nm, 4, true) + ' ' +
+               pad(a.resn || nm, 3) + ' ' + (a.chain || 'A').slice(0, 1) + pad((a.resi || 1) % 10000, 4) + '    ' +
+               pad(a.x.toFixed(3), 8) + pad(a.y.toFixed(3), 8) + pad(a.z.toFixed(3), 8) + '  1.00  0.00');
+    });
+    out.push('END');
+    var blob = new Blob([out.join('\\n') + '\\n'], {type: 'chemical/x-pdb'});
+    save(URL.createObjectURL(blob), name + tag() + '.pdb');
+  };
+})();
+</script>
+"""
+
+
+def _controls(inner, name='estrutura'):
+    """Barra de quadro e downloads para o visualizador contido em `inner` (vazia se nao houver um)."""
+    import re as _re
+    m = _re.search(r'viewer_(\w+)\s*=\s*\$3Dmol\.createViewer', inner)
+    if not m:
+        return ''
+    return _CONTROLS.replace('UID', m.group(1)).replace('NAME', name)
+
+
+def white_box(inner, name='estrutura'):
+    """Envolve o HTML do visualizador num bloco branco (o Colab em tema escuro pinta o fundo de preto)
+    e acrescenta a barra de quadro e downloads."""
     return ('<div style="background:#ffffff;color:#111827;color-scheme:light;'
-            f'display:inline-block;max-width:100%;border-radius:4px">{inner}</div>')
+            f'display:inline-block;max-width:100%;border-radius:4px">{inner}{_controls(inner, name)}</div>')
 
 
-def show_white(view):
-    """Mostra o visualizador py3Dmol sempre sobre fundo branco opaco."""
+def show_white(view, name='estrutura'):
+    """Mostra o visualizador py3Dmol sempre sobre fundo branco opaco, com a barra de quadro e downloads."""
     from IPython.display import HTML, display
     view.setBackgroundColor('#ffffff', 1)
-    display(HTML(white_box(view._make_html())))
+    display(HTML(white_box(view._make_html(), name)))
 
 def itp_bonds(itp, molname=None):
     """Pares de ligacao (base 0) de um moleculetype: [bonds] e [constraints], sem rede elastica."""
@@ -318,5 +397,5 @@ def single_view(path, kind, animate=False, water_path=None, height=420, width=82
     if animate:
         view.animate({'loop': 'forward', 'reps': 0, 'interval': 180})
     view.zoomTo()
-    show_white(view)
+    show_white(view, Path(path).stem)
 
