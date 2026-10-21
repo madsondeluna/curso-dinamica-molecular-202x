@@ -13,7 +13,7 @@ import py3Dmol
 from IPython.display import HTML, Markdown, display
 
 from pure import palette
-from replica_views import SEM
+from replica_views import SEM, show_white, white_box
 
 CHART = palette.CATEGORICAL
 INK = '#4b5563'
@@ -91,9 +91,8 @@ def show(structure, frames=False, water=True, box=True, style=None, height=440, 
         _box(view, text)
     if frames:
         view.animate({'loop': 'forward', 'reps': 0, 'interval': 150})
-    view.setBackgroundColor('white')
     view.zoomTo()
-    view.show()
+    show_white(view)
 
 
 def _legend(keys):
@@ -130,7 +129,7 @@ def stage(part, step, title, structure=None, text=(), legend=(), facts=None, com
     if callable(figure_html):
         figure_html()                      # funcao que desenha o visualizador
     elif figure_html:
-        display(HTML(figure_html))
+        display(HTML(white_box(figure_html)))
     elif structure:
         show(structure, frames=frames, water=water, box=box, style=style, height=height)
     if legend:
@@ -141,7 +140,7 @@ def stage(part, step, title, structure=None, text=(), legend=(), facts=None, com
 def card(eyebrow, title, figure_html, text=(), legend=(), facts=None):
     """Visualizadores das replicas (HTML do py3Dmol) seguidos da explicacao."""
     display(Markdown(f'#### {title}'))
-    display(HTML(figure_html))
+    display(HTML(white_box(figure_html)))
     if legend:
         _legend(legend)
     _explain(text=text, facts=facts)

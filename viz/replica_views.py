@@ -23,6 +23,19 @@ SEM = {
 
 
 # ---------------------------------------------------------------- topologia
+
+def white_box(inner):
+    """Envolve o HTML do visualizador num bloco branco (o Colab em tema escuro pinta o fundo de preto)."""
+    return ('<div style="background:#ffffff;color:#111827;color-scheme:light;'
+            f'display:inline-block;max-width:100%;border-radius:4px">{inner}</div>')
+
+
+def show_white(view):
+    """Mostra o visualizador py3Dmol sempre sobre fundo branco opaco."""
+    from IPython.display import HTML, display
+    view.setBackgroundColor('#ffffff', 1)
+    display(HTML(white_box(view._make_html())))
+
 def itp_bonds(itp, molname=None):
     """Pares de ligacao (base 0) de um moleculetype: [bonds] e [constraints], sem rede elastica."""
     lines = open(itp).read().splitlines()
@@ -283,12 +296,12 @@ def triple_view(paths, kind, labels, height=420, animate=False, water=True):
             # agua em modelo proprio: no 3Dmol a opacidade vale por modelo
             view.addModel(wfile.read_text(), 'pdb', viewer=v)
             view.setStyle({'atom': 'W'}, {'sphere': {'color': SEM['water'], 'radius': 2.0, 'opacity': 0.35}}, viewer=v)
-        view.setBackgroundColor('white', 0, viewer=v)
+        view.setBackgroundColor('#ffffff', 1, viewer=v)
     view.zoomTo()
     if animate:
         view.animate({'loop': 'forward', 'reps': 0, 'interval': 180})
     head = ''.join(f'<li class="compare-ff">{l}</li>' for l in labels)
-    return f'<ul class="compare-labels">{head}</ul>{view._make_html()}'
+    return f'<ul class="compare-labels">{head}</ul>{white_box(view._make_html())}'
 
 
 def single_view(path, kind, animate=False, water_path=None, height=420, width=820):
@@ -319,7 +332,6 @@ def single_view(path, kind, animate=False, water_path=None, height=420, width=82
             view.setStyle(sel, {'sphere': {'color': '#5b9bd5', 'radius': 3.0, 'opacity': 0.3}})
     if animate:
         view.animate({'loop': 'forward', 'reps': 0, 'interval': 180})
-    view.setBackgroundColor('white')
     view.zoomTo()
-    view.show()
+    show_white(view)
 

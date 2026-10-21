@@ -566,7 +566,7 @@ v = py3Dmol.view(width='100%', height=440)
 v.addModel(open('1UBQ_protein.pdb').read(), 'pdb')
 v.addModel(open('ubq_cg.pdb').read(), 'pdb')
 mapping_style(v)
-v.setBackgroundColor('white', 0)
+v.setBackgroundColor('#ffffff', 1)
 v.zoomTo()
 
 stage('A', 2, 'Mapeamento atomístico para beads', figure_html=v._make_html(),
