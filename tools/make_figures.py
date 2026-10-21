@@ -16,7 +16,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import Circle, FancyArrowPatch, Rectangle
+from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Rectangle
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'viz'))
@@ -46,23 +46,72 @@ def frame_off(ax):
 
 
 # ---------------------------------------------------------------- 1. ciclo da MD
+def _arc(ax, t0, t1, R, color, head=True):
+    """Arco do anel entre os angulos t0 e t1 (graus), com ponta de seta no fim."""
+    th = np.radians(np.linspace(t0, t1, 80))
+    x, y = R * np.cos(th), R * np.sin(th)
+    ax.plot(x[:-2], y[:-2], color=color, lw=2.2, solid_capstyle='round', zorder=2)
+    if head:
+        ax.add_patch(FancyArrowPatch((x[-6], y[-6]), (x[-1], y[-1]), arrowstyle='-|>',
+                                     mutation_scale=18, color=color, lw=0, zorder=3))
+
+
 def fig_md_loop():
-    fig, ax = plt.subplots(figsize=(8, 4.6))
-    frame_off(ax); ax.set_xlim(0, 10); ax.set_ylim(0, 6)
-    boxes = [(5, 5.1, 'Posições  $\\mathbf{r}(t)$'),
-             (8.4, 3, 'Forças  $\\mathbf{F} = -\\nabla U(\\mathbf{r})$'),
-             (5, 0.9, 'Acelerações  $\\mathbf{a} = \\mathbf{F}/m$'),
-             (1.6, 3, 'Velocidades  $\\mathbf{v}(t+\\Delta t/2)$')]
-    for x, y, t in boxes:
-        ax.text(x, y, t, ha='center', va='center', fontsize=11,
-                bbox=dict(boxstyle='round,pad=0.5', fc='white', ec=INK, lw=1))
-    pts = [(5, 5.1), (8.4, 3), (5, 0.9), (1.6, 3)]
-    for i in range(4):
-        a, b = pts[i], pts[(i + 1) % 4]
-        ax.add_patch(FancyArrowPatch(a, b, connectionstyle='arc3,rad=-0.25', arrowstyle='-|>',
-                                     mutation_scale=16, color=C[0], lw=1.6, shrinkA=38, shrinkB=38))
-    ax.text(5, 3, 'repete a cada passo $\\Delta t$\n(leap-frog)', ha='center', va='center', fontsize=10, color=INK)
-    ax.set_title('Ciclo de integração da dinâmica molecular')
+    fig, ax = plt.subplots(figsize=(11, 6.8))
+    frame_off(ax); ax.set_aspect('equal')
+    ax.set_xlim(-7.4, 7.4); ax.set_ylim(-3.6, 3.5)
+    R = 2.55
+    ring = plt.Circle((0, 0), R, fill=False, ec=BAND, lw=7, alpha=0.35, zorder=1)
+    ax.add_patch(ring)
+    # passo: (angulo, numero, nome, equacao, cor)
+    steps = [(90, '1', 'Posições', '$\\mathbf{r}(t)$', C[0]),
+             (0, '2', 'Forças', '$\\mathbf{F}_i = -\\nabla_i\\, U(\\mathbf{r})$', C[1]),
+             (-90, '3', 'Velocidades', '$\\mathbf{v}(t+\\frac{\\Delta t}{2}) = \\mathbf{v}(t-\\frac{\\Delta t}{2}) + \\frac{\\mathbf{F}}{m}\\Delta t$', C[2]),
+             (180, '4', 'Novas posições', '$\\mathbf{r}(t+\\Delta t) = \\mathbf{r}(t) + \\mathbf{v}(t+\\frac{\\Delta t}{2})\\,\\Delta t$', C[3])]
+    # folga angular de cada lado do no (caixas largas no topo e na base)
+    gap = {90: 22, 0: 20, -90: 40, 180: 20}
+    for i, (ang, *_rest) in enumerate(steps):
+        nxt = steps[(i + 1) % 4][0]
+        end = nxt if nxt < ang else nxt - 360
+        _arc(ax, ang - gap[ang], end + gap[nxt], R, INK)
+    fig.canvas.draw()
+    inv = ax.transData.inverted()
+    for ang, num, name, eq, col in steps:
+        x, y = R * np.cos(np.radians(ang)), R * np.sin(np.radians(ang))
+        t1 = ax.text(x, y + 0.24, name, ha='center', va='center', fontsize=11.5, color=INK,
+                     weight='bold', zorder=5)
+        t2 = ax.text(x, y - 0.3, eq, ha='center', va='center', fontsize=11, color=INK, zorder=5)
+        r = fig.canvas.get_renderer()
+        ext = [inv.transform(tx.get_window_extent(r)) for tx in (t1, t2)]
+        if ang in (0, 180):        # cartoes laterais por fora do anel, borda interna sobre ele
+            w = max(e[1, 0] - e[0, 0] for e in ext) / 2 + 0.28
+            dx = (R - 0.3 + w - x) if ang == 0 else (-R + 0.3 - w - x)
+            for tx in (t1, t2):
+                tx.set_x(tx.get_position()[0] + dx)
+            ext = [e + [dx, 0] for e in ext]
+        x0 = min(e[0, 0] for e in ext) - 0.28; x1 = max(e[1, 0] for e in ext) + 0.28
+        y0 = min(e[0, 1] for e in ext) - 0.2; y1 = max(e[1, 1] for e in ext) + 0.2
+        ax.add_patch(FancyBboxPatch((x0, y0), x1 - x0, y1 - y0, boxstyle='round,pad=0,rounding_size=0.22',
+                                    fc='white', ec=col, lw=1.6, zorder=4))
+        ax.add_patch(plt.Circle((x0, y1), 0.2, fc=col, ec='white', lw=1.5, zorder=6))
+        ax.text(x0, y1, num, ha='center', va='center', fontsize=9, color='white', weight='bold', zorder=7)
+    # centro: uma particula avancando um passo, com a forca que a desvia
+    s = np.linspace(-1.1, 1.1, 60)
+    ax.plot(s, -0.25 * s ** 2 + 0.25, color=BAND, lw=1.2, ls=(0, (3, 3)), zorder=2)
+    for xx, al in ((-0.9, 0.3), (0, 1.0), (0.9, 0.3)):
+        ax.add_patch(plt.Circle((xx, -0.25 * xx ** 2 + 0.25), 0.17, fc=C[0], ec='white', lw=1, alpha=al, zorder=4))
+    ax.add_patch(FancyArrowPatch((0, 0.25), (0.75, 0.25), arrowstyle='-|>', mutation_scale=12,
+                                 color=C[3], lw=1.6, shrinkA=6, zorder=5))
+    ax.add_patch(FancyArrowPatch((0, 0.25), (0, -0.45), arrowstyle='-|>', mutation_scale=12,
+                                 color=C[1], lw=1.6, shrinkA=6, zorder=5))
+    ax.text(0.42, 0.45, '$\\mathbf{v}$', color=C[3], fontsize=11, ha='center')
+    ax.text(0.17, -0.5, '$\\mathbf{F}$', color=C[1], fontsize=11, ha='left')
+    ax.text(-0.9, 0.62, '$t-\\Delta t$', color=INK, fontsize=8.5, ha='center', alpha=0.7)
+    ax.text(0, 0.62, '$t$', color=INK, fontsize=8.5, ha='center')
+    ax.text(0.9, 0.62, '$t+\\Delta t$', color=INK, fontsize=8.5, ha='center', alpha=0.7)
+    ax.text(0, -1.05, 'repete a cada passo $\\Delta t$', ha='center', va='center', fontsize=10, color=INK)
+    ax.text(0, -1.42, 'AA 2 fs  ·  Martini 20 fs', ha='center', va='center', fontsize=9, color=INK, alpha=0.7)
+    ax.set_title('Ciclo de integração da dinâmica molecular (leap-frog)')
     save(fig, 'fund_ciclo_md.png')
 
 
