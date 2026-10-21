@@ -273,6 +273,9 @@ if USE_PRECOMPUTED and not cached(PACOTE, f'replica {REPLICA} pre-computada'):
 
 # Visualizador e tema dos graficos
 sys.path.insert(0, os.path.abspath('viz'))
+# Ao reexecutar na mesma sessao, descarta versoes antigas ja carregadas: vale o codigo recem-baixado
+for _m in ('simple_view', 'replica_views', 'replica_plots', 'pure.mpl', 'pure.palette', 'pure'):
+    sys.modules.pop(_m, None)
 import re
 import numpy as np
 import matplotlib.pyplot as plt
