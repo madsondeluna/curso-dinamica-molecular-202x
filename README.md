@@ -50,7 +50,7 @@ Material de aula executável no Google Colab: uma proteína e uma membrana que s
 
 ## Como usar no Google Colab
 
-Requisitos: conta Google e navegador. Nada é instalado no computador. Clique no botão do notebook, faça login e execute as células em ordem (`Shift + Enter`). As duas primeiras células mantêm a sessão ativa e montam o Google Drive.
+Requisitos: conta Google e navegador. Nada é instalado no computador. Clique no botão do notebook, faça login e execute as células em ordem (`Shift + Enter`). As primeiras células reiniciam o ambiente se ele já tiver sido usado e mantêm a sessão ativa. O Google Drive só é montado para simular do zero (`USE_PRECOMPUTED = False`).
 
 O Colab baixa tudo deste repositório público: parâmetros, visualizadores, as três réplicas já simuladas e as imagens.
 
@@ -58,7 +58,7 @@ Parâmetros na segunda célula de `MD_Martini.ipynb`:
 
 | Parâmetro | Padrão | Efeito |
 |-----------|--------|--------|
-| `REPLICA` | `1` | réplica usada (1, 2 ou 3); pasta `MyDrive/aula_martini/repN` |
+| `REPLICA` | `1` | réplica usada (1, 2 ou 3); pasta `/content/aula_martini/repN` (`MyDrive/aula_martini/repN` ao simular do zero) |
 | `USE_PRECOMPUTED` | `True` | baixa `results/repN.tar.gz`: todas as etapas aparecem como concluídas e os cartões, gráficos e visualizações 3D saem em poucos minutos |
 
 | Notebook | Modo | Tempo no Colab gratuito |

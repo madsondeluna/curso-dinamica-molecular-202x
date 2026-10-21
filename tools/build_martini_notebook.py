@@ -51,9 +51,9 @@ md('''
 ''')
 
 md('''
-## Antes de começar: mantenha a sessão viva e salve no Drive
+## Antes de começar: ambiente limpo e sessão ativa
 
-Execute as três células abaixo **antes de qualquer outra coisa**. A primeira reinicia o ambiente sozinha se ele já tiver sido usado: a execução para com a mensagem *Ambiente reiniciado* (o Colab pode avisar que a sessão travou, é esperado). Nesse caso, rode **Ambiente de execução > Executar tudo** de novo. Com o Drive montado, todos os arquivos ficam em `MyDrive/aula_martini/repN`.
+Execute as três células abaixo **antes de qualquer outra coisa**. A primeira reinicia o ambiente sozinha se ele já tiver sido usado: a execução para com a mensagem *Ambiente reiniciado* (o Colab pode avisar que a sessão travou, é esperado). Nesse caso, rode **Ambiente de execução > Executar tudo** de novo. Os arquivos ficam em `/content/aula_martini/repN`. Só para simular do zero (`USE_PRECOMPUTED = False`) o notebook monta o Google Drive e grava em `MyDrive/aula_martini/repN`, para retomar do último checkpoint se a sessão cair.
 
 **GPU.** Para simular do zero (`USE_PRECOMPUTED = False`), escolha **Ambiente de execução > Alterar o tipo de ambiente de execução > T4 GPU** antes de executar. O notebook detecta a GPU e a usa no `mdrun` quando o GROMACS instalado tem suporte; sem GPU, ou sem suporte, a simulação roda na CPU. Com a réplica pré-computada, a GPU não faz diferença.
 
@@ -95,17 +95,20 @@ code('''
 REPLICA = 1              # 1, 2 ou 3: cada grupo usa uma replica diferente
 USE_PRECOMPUTED = True   # True: baixa a replica ja simulada do GitHub; False: simula tudo do zero
 
-# Monta o Google Drive (opcional) e define o diretorio de trabalho
+# Diretorio de trabalho. O Google Drive so e montado para simular do zero:
+# a corrida leva horas, e o Drive guarda checkpoints se a sessao cair.
+# Com a replica pre-computada, tudo fica em /content e baixa de novo em segundos.
 import os
 
-try:
-    from google.colab import drive
-    drive.mount('/content/drive')
-    BASE_DIR = '/content/drive/MyDrive/aula_martini'
-    print('Google Drive montado.')
-except Exception:
-    BASE_DIR = '/content/aula_martini' if os.path.isdir('/content') else os.path.abspath('aula_martini')
-    print('Drive nao montado: arquivos nao persistem apos a sessao.')
+BASE_DIR = '/content/aula_martini' if os.path.isdir('/content') else os.path.abspath('aula_martini')
+if not USE_PRECOMPUTED:
+    try:
+        from google.colab import drive
+        drive.mount('/content/drive')
+        BASE_DIR = '/content/drive/MyDrive/aula_martini'
+        print('Google Drive montado: a simulacao continua de onde parou se a sessao cair.')
+    except Exception:
+        print('Drive nao montado: arquivos nao persistem apos a sessao.')
 WORK_DIR = os.path.join(BASE_DIR, f'rep{REPLICA}')
 os.makedirs(WORK_DIR, exist_ok=True)
 os.chdir(WORK_DIR)
@@ -166,7 +169,7 @@ def seeds():
     return json.load(open(SEEDS_FILE)) if os.path.exists(SEEDS_FILE) else {}
 
 def record_seed(step, **values):
-    """Guarda em seeds.json as sementes usadas em cada etapa (fica no Drive)."""
+    """Guarda em seeds.json as sementes usadas em cada etapa (no diretorio da replica)."""
     s = seeds()
     s.setdefault(step, {}).update(values)
     json.dump(s, open(SEEDS_FILE, 'w'), indent=1)
