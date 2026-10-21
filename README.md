@@ -17,6 +17,7 @@ Material de aula executável no Google Colab: uma proteína e uma membrana que s
 - [4. Quanto custa cada resolução](#4-quanto-custa-cada-resolução)
 - [5. Parte A: ubiquitina em Martini 3](#5-parte-a-ubiquitina-em-martini-3)
 - [6. Parte B: automontagem de uma bicamada](#6-parte-b-automontagem-de-uma-bicamada)
+- [Membranas reais: células normais, de câncer e bactérias](#membranas-reais-células-normais-de-câncer-e-bactérias)
 - [7. Réplicas e sementes](#7-réplicas-e-sementes)
 - [Material legado: curso atomístico](#material-legado-curso-atomístico)
 - [Referência técnica](#referência-técnica)
@@ -33,6 +34,7 @@ Material de aula executável no Google Colab: uma proteína e uma membrana que s
 | 4 | Custo de cada resolução | seção 4 |
 | 5 | Prática: ubiquitina coarse-grained, do PDB à análise | `MD_Martini.ipynb`, Parte A |
 | 6 | Prática: lipídios aleatórios formando uma bicamada | `MD_Martini.ipynb`, Parte B |
+| 6b | Membranas reais: células normais, de câncer e bactérias; peptídeos antimicrobianos | seção *Membranas reais* |
 | 7 | Três réplicas: o que se repete e o que é acaso | seção 7; seção de réplicas do notebook |
 
 
@@ -175,7 +177,7 @@ Aplicando o fator de custo aos 14 min da ubiquitina, os mesmos 15 ns levariam da
 
 ## 5. Parte A: ubiquitina em Martini 3
 
-Mesma proteína do curso atomístico (material legado): 76 resíduos, carga líquida zero. Cada etapa do notebook termina com um cartão de etapa: visualização 3D interativa, explicação, números do sistema e a mesma etapa nas três resoluções.
+**Por que a ubiquitina.** É uma proteína pequena (76 resíduos, carga líquida zero) presente em todas as células eucarióticas. Ela funciona como etiqueta: enzimas ligam a Gly76 da cauda C-terminal a lisinas de outras proteínas, e cadeias ligadas pela Lys48 marcam a proteína para degradação no proteassomo. Esse sistema é alvo terapêutico: o bortezomibe, inibidor do proteassomo, foi aprovado em 2003 para o mieloma múltiplo (Bross *et al.*, 2004). É a mesma proteína do curso atomístico (material legado). Cada etapa do notebook termina com um cartão de etapa: visualização 3D interativa, explicação, números do sistema e a mesma etapa nas três resoluções.
 
 | Etapa | Comando ou arquivo | Valor |
 |-------|--------------------|-------|
@@ -197,7 +199,7 @@ Nas três réplicas, a rede elástica mantém o enovelamento (RMSD de 0,17 a 0,2
 
 ## 6. Parte B: automontagem de uma bicamada
 
-Lipídios distribuídos ao acaso em água se organizam sozinhos em bicamada, guiados pelo efeito hidrofóbico. Na Parte A a estrutura estava dada; aqui nada é imposto.
+Lipídios distribuídos ao acaso em água se organizam sozinhos em bicamada, guiados pelo efeito hidrofóbico. Na Parte A a estrutura estava dada; aqui nada é imposto. É o mesmo princípio que forma as membranas das células, os lipossomos usados para entregar fármacos e as nanopartículas lipídicas das vacinas de mRNA.
 
 | Item | Valor |
 |------|-------|
@@ -234,6 +236,27 @@ A réplica 3 terminou cerca de 320 kJ/mol acima das outras duas: a bicamada é o
 ![Membrana: início e fim nas três réplicas](imagens/martini_vistas_membrana.png)
 
 
+## Membranas reais: células normais, de câncer e bactérias
+
+A bicamada desta aula tem um único lipídio. Membranas de verdade misturam dezenas, e a composição de cada lado é diferente. Essa diferença decide como moléculas e fármacos interagem com cada tipo de célula.
+
+![Composição das membranas](imagens/fund_membranas_celulas.png)
+
+| Membrana | Monocamada externa | Monocamada interna | Superfície externa |
+|----------|--------------------|--------------------|--------------------|
+| Célula humana normal | PC, esfingomielina, colesterol | PE, PS, PC, colesterol | neutra |
+| Célula de câncer | PC, esfingomielina, colesterol e **PS exposta** | PE, PS, PC, colesterol | aniônica |
+| Bactéria (membrana interna de *E. coli*) | PE, PG, cardiolipina | igual à externa | aniônica, sem colesterol |
+
+**Célula normal.** A célula gasta energia para manter a PS, de carga negativa, só na face interna; por fora a membrana é neutra e rica em colesterol (van Meer *et al.*, 2008).
+
+**Célula de câncer.** Muitas células tumorais perdem essa assimetria: células de melanoma e carcinoma mostraram de 3 a 7 vezes mais PS na face externa que queratinócitos normais (Utsugi *et al.*, 1991). A superfície negativa é explorada por peptídeos anticâncer e por moléculas que reconhecem PS.
+
+**Bactéria.** A membrana interna de *E. coli* é formada principalmente por PE, com PG e cardiolipina, ambos negativos, e não tem colesterol; a composição varia entre espécies e condições (Sohlenkamp e Geiger, 2016).
+
+**Exemplo translacional: peptídeos antimicrobianos.** Peptídeos do sistema imune, como magainina e LL-37, são catiônicos. São atraídos pelas superfícies negativas das bactérias e interagem pouco com a superfície neutra e rica em colesterol das células humanas, uma das bases da seletividade buscada em novos antibióticos (Zasloff, 2002). Todos esses lipídios têm parâmetros no Martini 3 (M3-Lipid-Parameters): trocar a bicamada desta aula por uma membrana bacteriana ou tumoral é mudar a composição de entrada.
+
+
 ## 7. Réplicas e sementes
 
 Uma simulação é uma amostra de uma trajetória possível. Uma conclusão tirada de uma única corrida pode ser acaso daquela trajetória. Com réplicas independentes, cada resultado vira média ± desvio, e um evento raro em uma só fica visível como raro.
@@ -256,19 +279,47 @@ Réplicas só são independentes se as sementes dos geradores aleatórios forem 
 
 O notebook sorteia todas as sementes e grava os valores em `seeds.json`, na pasta de cada réplica.
 
-Cada réplica em linha própria (contínua, tracejada, pontilhada):
+Cada métrica aparece duas vezes: primeiro cada réplica em sua linha (contínua, tracejada, pontilhada), depois a média com faixa de ± 1 desvio padrão.
 
-![Réplicas](imagens/martini_replicas.png)
+**Proteína: RMSD.** As três réplicas sobem e oscilam na mesma faixa, entre 0,15 e 0,25 nm: o comportamento é reprodutível, e as diferenças entre as linhas são flutuação térmica.
 
-Média ± desvio padrão sobre as três:
+![RMSD por réplica](imagens/martini_rmsd_replicas.png)
 
-![Média ± DP](imagens/martini_replicas_media.png)
+Com réplicas que concordam, a faixa de desvio é estreita e a média representa bem o sistema.
 
-Valores finais da membrana, só das réplicas em que a bicamada se formou:
+![RMSD médio](imagens/martini_rmsd_media.png)
 
-![Valores finais](imagens/martini_replicas_valores.png)
+**Proteína: RMSF.** Os picos caem nos mesmos resíduos nas três réplicas: perto do 9, em 46-47 e na cauda C-terminal. A flexibilidade de cada região é propriedade da proteína, não de uma corrida. A cauda C-terminal termina na Gly76, o ponto em que a ubiquitina se liga a outras proteínas; a faixa cinza é a α-hélice, uma das regiões mais rígidas.
 
-Na proteína, as três curvas seguem a mesma tendência. Na membrana, duas réplicas formam a bicamada em tempos próximos e uma fica presa: a mesma receita, com sementes diferentes, leva a destinos diferentes num tempo finito. No notebook, a seção *Réplicas lado a lado em 3D* mostra as três réplicas em visualizadores ligados.
+![RMSF por réplica](imagens/martini_rmsf_replicas.png)
+
+![RMSF médio](imagens/martini_rmsf_media.png)
+
+**Membrana: parâmetro de ordem.** Em duas réplicas o S sobe de ~0,2 para ~0,7 entre 4 e 7 ns; na terceira fica perto de 0,2 e só começa a subir no fim. A formação da bicamada é um evento cinético: o destino é o mesmo, mas o tempo depende da semente.
+
+![Parâmetro de ordem por réplica](imagens/martini_ordem_replicas.png)
+
+Depois de 6 ns a faixa de desvio fica larga e a média para em ~0,5, um valor que nenhuma réplica tem. A média esconde que duas formaram a bicamada e uma não: olhe sempre as réplicas antes de confiar na média.
+
+![Parâmetro de ordem médio](imagens/martini_ordem_media.png)
+
+**Membrana: energia potencial.** A energia cai nas três réplicas, porque as caudas apolares deixam de tocar a água. A réplica sem bicamada termina um pouco acima: a bicamada é o vale mais fundo da paisagem.
+
+![Energia por réplica](imagens/martini_energia_replicas.png)
+
+![Energia média](imagens/martini_energia_media.png)
+
+**Membrana: valores finais**, só das réplicas em que a bicamada se formou. Com duas réplicas, o desvio padrão é uma estimativa grosseira; um valor confiável pede mais réplicas.
+
+![Tempo de formação](imagens/martini_valor_formacao.png)
+
+A espessura entre os planos de fosfato fica perto de 4,3 nm, da ordem das membranas das células.
+
+![Espessura](imagens/martini_valor_espessura.png)
+
+A área por lipídio fica perto de 0,60 nm². Quanto maior a área, mais fluida e permeável a membrana; colesterol e caudas saturadas diminuem a área, caudas insaturadas aumentam.
+
+![Área por lipídio](imagens/martini_valor_area.png)
 
 Uso em aula: cada grupo escolhe uma `REPLICA`, com `USE_PRECOMPUTED = True` para ver os resultados na hora ou `False` para simular a própria réplica.
 
@@ -327,7 +378,7 @@ constraints     = h-bonds
 | `results/viz/repN_*.pdb` | estruturas e animações com ligações CG para os visualizadores 3D |
 | `results/pack_results.sh` | empacota e anonimiza as réplicas |
 | `imagens/fund_*.png` | ilustrações dos fundamentos (`tools/make_figures.py`) |
-| `imagens/martini_*.png` | réplicas: curvas, médias e vistas ortográficas (`tools/make_replica_figures.py`) |
+| `imagens/martini_*.png` | réplicas: um gráfico por métrica, valores finais e vistas ortográficas (`tools/make_replica_figures.py`) |
 | `tools/run_replicas.sh` | roda as três réplicas localmente (`runs/`, fora do git) |
 
 ### Parâmetros Martini 3 (todos os `.mdp` de `mdp_martini/`)
@@ -391,6 +442,11 @@ rvdw                     = 1.1
 - Marrink, S. J.; Risselada, H. J.; Yefimov, S.; Tieleman, D. P.; de Vries, A. H. The MARTINI force field: coarse grained model for biomolecular simulations. *J. Phys. Chem. B* **2007**, *111*, 7812-7824. https://doi.org/10.1021/jp071097f
 - Marrink, S. J.; Lindahl, E.; Edholm, O.; Mark, A. E. Simulation of the spontaneous aggregation of phospholipids into bilayers. *J. Am. Chem. Soc.* **2001**, *123*, 8638-8639. https://doi.org/10.1021/ja0159618
 - McGibbon, R. T. *et al.* MDTraj: a modern open library for the analysis of molecular dynamics trajectories. *Biophys. J.* **2015**, *109*, 1528-1532. https://doi.org/10.1016/j.bpj.2015.08.015
+- van Meer, G.; Voelker, D. R.; Feigenson, G. W. Membrane lipids: where they are and how they behave. *Nat. Rev. Mol. Cell Biol.* **2008**, *9*, 112-124. https://doi.org/10.1038/nrm2330
+- Utsugi, T.; Schroit, A. J.; Connor, J.; Bucana, C. D.; Fidler, I. J. Elevated expression of phosphatidylserine in the outer membrane leaflet of human tumor cells and recognition by activated human blood monocytes. *Cancer Res.* **1991**, *51*, 3062-3066. PMID 2032247
+- Sohlenkamp, C.; Geiger, O. Bacterial membrane lipids: diversity in structures and pathways. *FEMS Microbiol. Rev.* **2016**, *40*, 133-159. https://doi.org/10.1093/femsre/fuv008
+- Zasloff, M. Antimicrobial peptides of multicellular organisms. *Nature* **2002**, *415*, 389-395. https://doi.org/10.1038/415389a
+- Bross, P. F. *et al.* Approval summary for bortezomib for injection in the treatment of multiple myeloma. *Clin. Cancer Res.* **2004**, *10*, 3954-3964. https://doi.org/10.1158/1078-0432.CCR-03-0781
 - Tutorial Martini 3, *Lipid bilayers, Part I: Self-assembly*: https://cgmartini.nl/docs/tutorials/Martini3/LipidsI/
 - Inputs do tutorial de Lemkul: https://github.com/Lemkul-Lab/gmx_tutorials_jpcb
 - Manual do GROMACS: https://manual.gromacs.org/

@@ -128,21 +128,79 @@ def write_pdb(path, topology, frames_nm, bonds, keep=None):
     Path(path).write_text('\n'.join(out) + '\n')
 
 
+# ---------------------------------------------------------------- filme da automontagem
+def _write_movie(d, t, top, bonds, lip, n_frames, name):
+    """Filme com a normal final da bicamada na vertical e cada quadro centrado nas caudas."""
+    tails_all = top.select('name =~ "C[1-4][AB]"')
+    order = d / 'mem_order.npz'
+    normal_axis = int(np.argmax(np.abs(np.load(order)['normal']))) if order.exists() else 2
+    perm = {0: [1, 2, 0], 1: [2, 0, 1], 2: [0, 1, 2]}[normal_axis]
+    idx = np.linspace(0, t.n_frames - 1, n_frames).astype(int)
+    frames = []
+    for i in idx:
+        box = t.unitcell_lengths[i][perm]
+        xyz = center_along(t.xyz[i][:, perm], box, tails_all, 2)
+        frames.append(side_view(wrap_molecules(xyz, box, top), 2))
+    write_pdb(d / f'{name}.pdb', top, frames, bonds, keep=lip)
+    write_xyz(d / f'{name}_water.xyz', frames, top.select('resname W'))
+
+
+def export_protein_movie(rep_dir, n_frames=31, name='viz_prot_movie'):
+    """Filme completo da proteina com o sistema inteiro (agua em arquivo separado)."""
+    import mdtraj as md
+    d = Path(rep_dir)
+    if not (d / f'{name}.pdb').exists():
+        t = md.load(str(d / 'md_prot_pbc.xtc'), top=str(d / 'ubq_ions.gro'))
+        top = t.topology
+        idx = np.linspace(0, t.n_frames - 1, n_frames).astype(int)
+        frames = [t.xyz[i] for i in idx]
+        write_pdb(d / f'{name}.pdb', top, frames, itp_bonds(d / 'molecule_0.itp'), keep=top.select('not resname W'))
+        write_xyz(d / f'{name}_water.xyz', frames, top.select('resname W'))
+    return d / f'{name}.pdb', d / f'{name}_water.xyz'
+
+
+def export_movie(rep_dir, n_frames=31, name='viz_mem_movie'):
+    """Filme completo da automontagem (lipidios e agua em arquivos separados)."""
+    import mdtraj as md
+    d = Path(rep_dir)
+    if not (d / f'{name}.pdb').exists():
+        t = md.load(str(d / 'mem_whole.xtc'), top=str(d / 'mem_em.gro'))
+        top = t.topology
+        bonds = system_bonds(top, {'DSPC': itp_bonds(d / 'martini_v3.0.0_phospholipids_PC_v2.itp', 'DSPC')})
+        _write_movie(d, t, top, bonds, top.select('resname DSPC'), n_frames, name)
+    return d / f'{name}.pdb', d / f'{name}_water.xyz'
+
+
+def write_xyz(path, frames_nm, keep, label='W'):
+    """XYZ multi-quadro (A) para a agua: sem ligacoes, ~3 vezes menor que o PDB."""
+    out = []
+    for xyz in frames_nm:
+        p = xyz[keep] * 10
+        out.append(str(len(p)))
+        out.append('agua W')
+        out += [f'{label} {a:.1f} {b:.1f} {c:.1f}' for a, b, c in p]
+    Path(path).write_text('\n'.join(out) + '\n')
+
+
 # ---------------------------------------------------------------- exportacao por replica
-def export_replica(rep_dir, n_frames_prot=31, n_frames_mem=16):
+def export_replica(rep_dir, n_frames_prot=16, n_frames_mem=16):
     """Gera viz_prot.pdb, viz_mem_final.pdb e viz_mem_anim.pdb dentro de rep_dir."""
     import mdtraj as md
     d = Path(rep_dir)
     prot_bonds = itp_bonds(d / 'molecule_0.itp')
     lip_bonds = itp_bonds(d / 'martini_v3.0.0_phospholipids_PC_v2.itp', 'DSPC')
     out = {}
-    # proteina: trajetoria ja ajustada (so a proteina)
-    if (d / 'md_prot_fit.xtc').exists() and not (d / 'viz_prot.pdb').exists():
-        t = md.load(str(d / 'md_prot_fit.xtc'), top=str(d / 'ubq_cg.pdb'))
+    # proteina: sistema inteiro centrado na proteina (agua em arquivo separado, translucida)
+    if (d / 'md_prot_pbc.xtc').exists() and not (d / 'viz_prot.pdb').exists():
+        t = md.load(str(d / 'md_prot_pbc.xtc'), top=str(d / 'ubq_ions.gro'))
+        top = t.topology
         idx = np.linspace(0, t.n_frames - 1, n_frames_prot).astype(int)
-        xyz = t.xyz[idx] - t.xyz[idx].mean(1, keepdims=True)
-        write_pdb(d / 'viz_prot.pdb', t.topology, xyz, [(i, j) for i, j in prot_bonds])
+        frames = [t.xyz[i] for i in idx]
+        nprot = sum(1 for a in top.atoms if a.residue.is_protein)
+        write_pdb(d / 'viz_prot.pdb', top, frames, list(prot_bonds), keep=top.select('not resname W'))
+        write_xyz(d / 'viz_prot_water.xyz', frames, top.select('resname W'))
     out['prot'] = d / 'viz_prot.pdb'
+    out['prot_water'] = d / 'viz_prot_water.xyz'
     # membrana: automontagem (so lipidios) e estado final (com agua)
     if (d / 'mem_whole.xtc').exists():
         t = md.load(str(d / 'mem_whole.xtc'), top=str(d / 'mem_em.gro'))
@@ -150,9 +208,7 @@ def export_replica(rep_dir, n_frames_prot=31, n_frames_mem=16):
         bonds = system_bonds(top, {'DSPC': lip_bonds})
         lip = top.select('resname DSPC')
         if not (d / 'viz_mem_anim.pdb').exists():
-            idx = np.linspace(0, t.n_frames - 1, n_frames_mem).astype(int)
-            frames = [wrap_molecules(t.xyz[i], t.unitcell_lengths[i], top) for i in idx]
-            write_pdb(d / 'viz_mem_anim.pdb', top, frames, bonds, keep=lip)
+            _write_movie(d, t, top, bonds, lip, n_frames_mem, 'viz_mem_anim')
         if not (d / 'viz_mem_final.pdb').exists():
             src = d / 'mem_eq_whole.xtc'
             if src.exists():   # bicamada formada: estado equilibrado, normal em z
@@ -168,10 +224,11 @@ def export_replica(rep_dir, n_frames_prot=31, n_frames_mem=16):
                 xyz = side_view(xyz, axis)
             water = top.select('resname W')
             write_pdb(d / 'viz_mem_final.pdb', top, [xyz], bonds, keep=top.select('not resname W'))
-            write_pdb(d / 'viz_mem_water.pdb', top, [xyz], [], keep=water)
+            write_xyz(d / 'viz_mem_water.xyz', [xyz], water)
     out['mem_anim'] = d / 'viz_mem_anim.pdb'
+    out['mem_anim_water'] = d / 'viz_mem_anim_water.xyz'
     out['mem_final'] = d / 'viz_mem_final.pdb'
-    out['mem_water'] = d / 'viz_mem_water.pdb'
+    out['mem_water'] = d / 'viz_mem_water.xyz'
     return out
 
 
@@ -179,28 +236,32 @@ def export_replica(rep_dir, n_frames_prot=31, n_frames_mem=16):
 _TAILS = [f'C{i}{s}' for i in range(1, 5) for s in 'AB']
 
 
-def style_protein(view, viewer):
+def style_protein(view, viewer=None):
     """Bolas e varetas: bastao nas ligacoes CG, esfera menor que a metade da ligacao."""
+    kw = {'viewer': viewer} if viewer is not None else {}
     view.setStyle({}, {'stick': {'color': SEM['protein'], 'radius': 0.5},
-                       'sphere': {'color': SEM['protein_sc'], 'radius': 1.1}}, viewer=viewer)
+                       'sphere': {'color': SEM['protein_sc'], 'radius': 1.1}}, **kw)
     view.setStyle({'atom': 'BB'}, {'stick': {'color': SEM['protein'], 'radius': 0.5},
-                                   'sphere': {'color': SEM['protein'], 'radius': 1.4}}, viewer=viewer)
+                                   'sphere': {'color': SEM['protein'], 'radius': 1.4}}, **kw)
+    view.setStyle({'atom': 'NA'}, {'sphere': {'color': SEM['na'], 'radius': 1.6}}, **kw)
+    view.setStyle({'atom': 'CL'}, {'sphere': {'color': SEM['cl'], 'radius': 1.6}}, **kw)
 
 
 _LIPID = ['NC3', 'PO4', 'GL1', 'GL2'] + _TAILS
 
 
-def style_membrane(view, viewer, water=True):
+def style_membrane(view, viewer=None, water=True):
     """Selecao por nome de bead: o 3Dmol le so 3 caracteres do nome do residuo (DSPC vira DSP)."""
-    view.setStyle({}, {}, viewer=viewer)
+    kw = {'viewer': viewer} if viewer is not None else {}
+    view.setStyle({}, {}, **kw)
     view.setStyle({'atom': _TAILS}, {'stick': {'color': SEM['tail'], 'radius': 0.5},
-                                     'sphere': {'color': SEM['tail'], 'radius': 0.9}}, viewer=viewer)
+                                     'sphere': {'color': SEM['tail'], 'radius': 0.9}}, **kw)
     for names, color, r in ((['NC3'], SEM['head_cat'], 1.7), (['PO4'], SEM['po4'], 1.6),
                             (['GL1', 'GL2'], SEM['glyc'], 1.4)):
         view.setStyle({'atom': names}, {'stick': {'color': SEM['tail'], 'radius': 0.5},
-                                        'sphere': {'color': color, 'radius': r}}, viewer=viewer)
-    view.setStyle({'atom': 'NA'}, {'sphere': {'color': SEM['na'], 'radius': 1.6}}, viewer=viewer)
-    view.setStyle({'atom': 'CL'}, {'sphere': {'color': SEM['cl'], 'radius': 1.6}}, viewer=viewer)
+                                        'sphere': {'color': color, 'radius': r}}, **kw)
+    view.setStyle({'atom': 'NA'}, {'sphere': {'color': SEM['na'], 'radius': 1.6}}, **kw)
+    view.setStyle({'atom': 'CL'}, {'sphere': {'color': SEM['cl'], 'radius': 1.6}}, **kw)
 
 
 def triple_view(paths, kind, labels, height=420, animate=False, water=True):
@@ -228,3 +289,37 @@ def triple_view(paths, kind, labels, height=420, animate=False, water=True):
         view.animate({'loop': 'forward', 'reps': 0, 'interval': 180})
     head = ''.join(f'<li class="compare-ff">{l}</li>' for l in labels)
     return f'<ul class="compare-labels">{head}</ul>{view._make_html()}'
+
+
+def single_view(path, kind, animate=False, water_path=None, height=420, width=820):
+    """Um visualizador por estrutura (fundo branco); agua translucida em modelo separado."""
+    import py3Dmol
+    if path is None or not Path(path).exists():
+        print('arquivo de visualizacao ausente:', path)
+        return
+    view = py3Dmol.view(width=width, height=height)
+    text = Path(path).read_text()
+    if animate:
+        view.addModelsAsFrames(text, 'pdb')
+    else:
+        view.addModel(text, 'pdb')
+    if kind == 'protein':
+        style_protein(view, None)
+    else:
+        style_membrane(view, None, water=False)
+    if water_path and Path(water_path).exists():
+        wtext = Path(water_path).read_text()
+        wfmt = 'xyz' if str(water_path).endswith('.xyz') else 'pdb'
+        if animate:
+            view.addModelsAsFrames(wtext, wfmt)         # agua animada junto, em modelo proprio
+        else:
+            view.addModel(wtext, wfmt)
+        # agua como lamina continua (efeito QuickSurf): esferas grandes, sobrepostas e translucidas
+        for sel in ({'atom': 'W'}, {'elem': 'W'}):
+            view.setStyle(sel, {'sphere': {'color': '#5b9bd5', 'radius': 3.0, 'opacity': 0.3}})
+    if animate:
+        view.animate({'loop': 'forward', 'reps': 0, 'interval': 180})
+    view.setBackgroundColor('white')
+    view.zoomTo()
+    view.show()
+

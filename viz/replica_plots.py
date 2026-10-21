@@ -179,3 +179,98 @@ def plot_scalars(sums):
             ax.legend(loc='upper right', fontsize=8, handlelength=1.5)
         fig.tight_layout()
     return white(fig), stats
+
+
+def use_paper_style(dpi=130):
+    """Aplica o estilo de figura de artigo ao matplotlib inteiro (graficos do notebook)."""
+    plt.rcParams.update(STYLE)
+    plt.rcParams.update({'figure.dpi': dpi, 'savefig.dpi': 200, 'font.size': 10,
+                         'lines.linewidth': 1.2, 'legend.fontsize': 9})
+    try:   # telas de alta densidade no Jupyter e no Colab
+        from matplotlib_inline.backend_inline import set_matplotlib_formats
+        set_matplotlib_formats('retina')
+    except Exception:
+        pass
+
+
+def finish(ax, title=None, subtitle=None, xlabel=None, ylabel=None, legend=None):
+    """Acabamento no estilo de artigo: titulo centrado, unidade no eixo y, legenda sem caixa."""
+    if title:
+        ax.set_title(title)
+    if xlabel:
+        ax.set_xlabel(xlabel)
+    if ylabel or subtitle:
+        ax.set_ylabel(f'{ylabel} ({subtitle})' if ylabel and subtitle else (ylabel or subtitle))
+    handles, labels = ax.get_legend_handles_labels()
+    if (legend is None and len(labels) >= 2) or legend:
+        ax.legend(frameon=False)
+
+
+# ---------------------------------------------------------------- um grafico por metrica
+METRICS = {
+    'rmsd': PANELS[1], 'rmsf': PANELS[0], 'S': PANELS[2], 'pot': PANELS[3],
+}
+SCALARS = {
+    't_form': ('Formação da bicamada', 'Tempo (ns)'),
+    'd_pp': ('Espessura D_PP', 'D_PP (nm)'),
+    'apl': ('Área por lipídio', 'Área (nm²)'),
+}
+
+
+def plot_metric(sums, metric, mode='replicas', ss=None, figsize=(8, 4)):
+    """Um painel: 'replicas' (uma linha por replica) ou 'mean' (media com faixa de +- 1 DP)."""
+    key, xk, yk, title, xl, yl, xs, loc = METRICS[metric]
+    with plt.rc_context(STYLE):
+        fig, ax = plt.subplots(figsize=figsize)
+        runs, x, Y = _runs(sums, key, xk, yk)
+        if key == 'protein' and xk == 'rmsf_res':
+            _bands(ax, helix_bands(ss))
+        if mode == 'replicas':
+            for (r, rx, ry), ls in zip(runs, LINESTYLES):
+                ax.plot(rx * xs, ry, color=COLORS[key], ls=ls, lw=1.1, label=f'Réplica {r}')
+            ax.legend(loc=loc)
+            ax.set_title(f'{NAMES[key]}: {title}')
+        else:
+            m = Y.mean(0)
+            sd = Y.std(0, ddof=1) if len(Y) > 1 else np.zeros_like(m)
+            ax.fill_between(x * xs, m - sd, m + sd, color=COLORS[key], alpha=0.18, lw=0, label='± 1 DP')
+            ax.plot(x * xs, m, color=COLORS[key], lw=1.3, label=f'Média de {len(Y)} réplicas')
+            ax.legend(loc=loc)
+            ax.set_title(f'{NAMES[key]}: {title} (média ± DP)')
+        if yk == 'S':
+            ax.set_ylim(0, 1)
+        if yk == 'pot' and runs:
+            _energy_ylim(ax, runs)
+        ax.set_xlabel(xl); ax.set_ylabel(yl)
+        fig.tight_layout()
+    return white(fig)
+
+
+def plot_scalar(sums, k, figsize=(7, 2.8)):
+    """Um valor final da membrana: um marcador por replica, media e DP em tinta."""
+    title, xl = SCALARS[k]
+    with plt.rc_context(STYLE):
+        fig, ax = plt.subplots(figsize=figsize)
+        vals = [(r, s['membrane'][k]) for r, s in sorted(sums.items())
+                if 'membrane' in s and s['membrane'].get(k) is not None]
+        for (r, v), mk in zip(vals, MARKERS):
+            ax.plot([v], [1], ls='none', marker=mk, ms=9, mfc='none', mec=COLORS['membrane'], mew=1.4,
+                    label=f'Réplica {r}')
+        stat = None
+        if vals:
+            v = np.array([x for _, x in vals])
+            sd = v.std(ddof=1) if len(v) > 1 else 0.0
+            ax.errorbar([v.mean()], [0], xerr=[sd], fmt='o', color=INK, capsize=4, ms=6, label='Média ± DP')
+            stat = (v.mean(), sd, len(v))
+            pad = max(sd, abs(v.mean()) * 0.02, 1e-3) * 3
+            ax.set_xlim(max(v.min() - pad, 0) if k == 't_form' else v.min() - pad, v.max() + pad)
+        missing = [r for r, s in sorted(sums.items()) if 'membrane' in s and s['membrane'].get(k) is None]
+        if missing:
+            ax.text(0.01, 0.05, 'sem bicamada: réplica ' + ', '.join(map(str, missing)),
+                    transform=ax.transAxes, fontsize=8, color=INK)
+        ax.set_ylim(-0.8, 1.8); ax.set_yticks([])
+        ax.set_title(f'{NAMES["membrane"]}: {title}'); ax.set_xlabel(xl)
+        ax.legend(loc='center left', bbox_to_anchor=(1.01, 0.5), fontsize=8, handlelength=1.5)
+        fig.tight_layout()
+    return white(fig), stat
+

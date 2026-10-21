@@ -22,6 +22,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'viz'))
 from pure import palette, mpl as pure_mpl  # noqa: E402
 from replica_plots import STYLE, INK, BAND  # noqa: E402
+from replica_views import SEM as SEM_  # noqa: E402
+sys.path.insert(0, str(ROOT / 'tools'))
 
 C = palette.CATEGORICAL
 OUT = ROOT / 'imagens'
@@ -404,24 +406,46 @@ def fig_cost(V=295.5, n_w=2084, n_cg=2304, n_aa=1231, n_ua=762, n_ions=54):
 
 
 # ---------------------------------------------------------------- 13. automontagem em quadros
-def fig_self_assembly(xtc, gro, times=(0, 2, 5, 8, 15)):
+def fig_self_assembly(xtc, gro, rep_dir=None, times=(0, 2, 5, 8, 15)):
+    """Quadros reais da automontagem: normal final na vertical, bicamada centrada em cada quadro."""
     import mdtraj as md
+    from make_replica_figures import draw, ORDER
+    from replica_views import wrap_molecules, center_along, itp_bonds, system_bonds
     t = md.load(xtc, top=gro)
     top = t.topology
-    sel = {'cabeças': top.select('name NC3 PO4'), 'caudas': top.select('name =~ "C[1-4][AB]"')}
-    fig, axes = plt.subplots(1, len(times), figsize=(3.1 * len(times), 3.4))
+    rep = Path(rep_dir) if rep_dir else Path(gro).parent
+    bonds = system_bonds(top, {'DSPC': itp_bonds(rep / 'martini_v3.0.0_phospholipids_PC_v2.itp', 'DSPC')})
+    lip = top.select('resname DSPC'); wat = top.select('resname W')
+    tails = top.select('name =~ "C[1-4][AB]"')
+    names = [a.name for a in top.atoms]
+    o = np.load(rep / 'mem_order.npz')
+    axis = int(np.argmax(np.abs(o['normal'])))
+    perm = list(ORDER[axis])                          # normal final -> z
+    idx = {int(a): k for k, a in enumerate(lip)}
+    lb = [(idx[i], idx[j]) for i, j in bonds if i in idx and j in idx]
+    lipnames = [names[i] for i in lip]
+    L = max(t.unitcell_lengths[0])
+    fig, axes = plt.subplots(1, len(times), figsize=(3.2 * len(times), 4.0))
     for ax, tn in zip(axes, times):
         i = int(np.argmin(np.abs(t.time / 1000 - tn)))
-        L = t.unitcell_lengths[i]
-        xyz = t.xyz[i] % L
-        ax.scatter(xyz[sel['caudas'], 0], xyz[sel['caudas'], 2], s=3, color=palette.tokens('light')['secondary'], lw=0)
-        ax.scatter(xyz[sel['cabeças'], 0], xyz[sel['cabeças'], 2], s=6, color=C[0], lw=0)
-        ax.add_patch(Rectangle((0, 0), L[0], L[2], fill=False, ec=INK, lw=0.8))
-        ax.set_xlim(-0.2, L[0] + 0.2); ax.set_ylim(-0.2, L[2] + 0.2); ax.set_aspect('equal'); frame_off(ax)
+        box = t.unitcell_lengths[i][perm]
+        xyz = t.xyz[i][:, perm]
+        xyz = center_along(xyz, box, tails, 2)
+        xyz = wrap_molecules(xyz, box, top)
+        draw(ax, xyz[lip], lipnames, lb, 0, 2, 1, box_hv=(box[0], box[2]), water=xyz[wat],
+             extent=((-0.5, L + 0.5), (-0.5, L + 0.5)))
         ax.set_title(f'{t.time[i] / 1000:.0f} ns')
-    fig.suptitle('Automontagem de 128 DSPC (simulação real, projeção x-z): cabeças em azul, caudas em cinza', y=1.04, fontsize=11)
-    save(fig, 'fund_automontagem_quadros.png')
-
+    from matplotlib.lines import Line2D
+    handles = [Line2D([], [], ls='none', marker='o', ms=9, mfc=SEM_[k], mec=INK, mew=0.4)
+               for k in ('head_cat', 'po4', 'glyc', 'tail', 'water')]
+    fig.legend(handles, ['Colina NC3', 'Fosfato PO4', 'Glicerol', 'Caudas', 'Água W'], loc='upper center',
+               ncol=5, frameon=False, bbox_to_anchor=(0.5, 0.06))
+    fig.suptitle('Automontagem de 128 DSPC, réplica 1 (simulação real, vista lateral, normal final na vertical)',
+                 y=0.99, fontsize=11)
+    fig.tight_layout(rect=(0, 0.07, 1, 0.95))
+    fig.savefig(OUT / 'fund_automontagem_quadros.png', dpi=DPI, bbox_inches='tight', facecolor='white')
+    plt.close(fig)
+    print('   fund_automontagem_quadros.png')
 
 # ---------------------------------------------------------------- 14. funil de energia
 def fig_funnel():
@@ -453,6 +477,72 @@ def fig_funnel():
     save(fig, 'fund_funil.png')
 
 
+# ---------------------------------------------------------------- 15. membranas de celulas reais
+LIPID = {  # nome: (cor, carga da cabeca, rotulo)
+    'PC':   ('#4c72b0', 0, 'PC (fosfatidilcolina)'),
+    'SM':   ('#64b5cd', 0, 'SM (esfingomielina)'),
+    'PE':   ('#8172b2', 0, 'PE (fosfatidiletanolamina)'),
+    'PS':   ('#c44e52', -1, 'PS (fosfatidilserina)'),
+    'PG':   ('#dd8452', -1, 'PG (fosfatidilglicerol)'),
+    'CL':   ('#937860', -2, 'CL (cardiolipina)'),
+    'CHOL': ('#ccb974', 0, 'Colesterol'),
+}
+
+
+def _leaflet(ax, comp, y, up, n=24, seed=0):
+    """Desenha uma monocamada: n lipidios sorteados pela composicao (fracoes)."""
+    rng = np.random.default_rng(seed)
+    names = list(comp)
+    p = np.array([comp[k] for k in names], float); p /= p.sum()
+    counts = np.round(p * n).astype(int)
+    seq = [k for k, c in zip(names, counts) for _ in range(c)]
+    rng.shuffle(seq)
+    for i, k in enumerate(seq[:n]):
+        x = i + 0.5
+        color, q, _ = LIPID[k]
+        d = -1 if up else 1
+        if k == 'CHOL':
+            ax.add_patch(Rectangle((x - 0.18, y + d * 0.3 - (0.9 if d < 0 else 0)), 0.36, 0.9, color=color, lw=0))
+            ax.add_patch(Circle((x, y), 0.16, color=color, ec=INK, lw=0.4))
+            continue
+        for dx in (-0.12, 0.12):
+            ax.plot([x + dx, x + dx], [y + d * 0.35, y + d * 1.55], color='#9a9a9a', lw=1.4, solid_capstyle='round')
+        ax.add_patch(Circle((x, y), 0.36, color=color, ec=INK, lw=0.5))
+        if q:
+            ax.text(x, y, '−' * abs(q), ha='center', va='center', color='white', fontsize=8, fontweight='bold')
+
+
+def fig_cell_membranes():
+    panels = [
+        ('Célula humana normal', 'superfície externa neutra',
+         {'PC': 45, 'SM': 25, 'CHOL': 30}, {'PE': 40, 'PS': 15, 'PC': 15, 'CHOL': 30}),
+        ('Célula de câncer', 'PS exposta: superfície externa aniônica',
+         {'PC': 40, 'SM': 20, 'PS': 10, 'CHOL': 30}, {'PE': 40, 'PS': 10, 'PC': 20, 'CHOL': 30}),
+        ('Bactéria (membrana interna de E. coli)', 'PG e CL: superfície aniônica, sem colesterol',
+         {'PE': 75, 'PG': 20, 'CL': 5}, {'PE': 75, 'PG': 20, 'CL': 5}),
+    ]
+    fig, axes = plt.subplots(3, 1, figsize=(12, 9.6))
+    for k, (ax, (title, sub, outer, inner)) in enumerate(zip(axes, panels)):
+        ax.axhspan(2.2, 3.6, color='#a6cfe3', alpha=0.35, lw=0)
+        ax.axhspan(-3.6, -2.2, color='#a6cfe3', alpha=0.35, lw=0)
+        ax.text(24.4, 2.9, 'periplasma' if k == 2 else 'meio externo', ha='left', va='center', fontsize=8, color=INK)
+        ax.text(24.4, -2.9, 'citoplasma', ha='left', va='center', fontsize=8, color=INK)
+        _leaflet(ax, outer, 1.9, up=True, seed=k)
+        _leaflet(ax, inner, -1.9, up=False, seed=k + 10)
+        ax.set_xlim(0, 27); ax.set_ylim(-3.6, 3.6); ax.set_aspect('equal'); frame_off(ax)
+        ax.set_title(f'{title}: {sub}', fontsize=10.5)
+    used = ['PC', 'SM', 'PE', 'PS', 'PG', 'CL', 'CHOL']
+    from matplotlib.lines import Line2D
+    handles = [Line2D([], [], ls='none', marker='o', ms=10, mfc=LIPID[n][0], mec=INK, mew=0.5) for n in used]
+    fig.legend(handles, [LIPID[n][2] + (' −' * abs(LIPID[n][1]) if LIPID[n][1] else '') for n in used],
+               loc='lower center', ncol=4, frameon=False, fontsize=8.5, bbox_to_anchor=(0.5, -0.01))
+    fig.suptitle('Composição das membranas por monocamada (esquema; proporções aproximadas)', y=0.995, fontsize=11)
+    fig.tight_layout(rect=(0, 0.06, 1, 0.98))
+    fig.savefig(OUT / 'fund_membranas_celulas.png', dpi=DPI, bbox_inches='tight', facecolor='white')
+    plt.close(fig)
+    print('   fund_membranas_celulas.png')
+
+
 def main():
     ap = argparse.ArgumentParser(description='Gera imagens/fund_*.png')
     ap.add_argument('--aa', required=True); ap.add_argument('--ua', required=True); ap.add_argument('--cg', required=True)
@@ -461,7 +551,7 @@ def main():
     OUT.mkdir(exist_ok=True)
     fig_md_loop(); fig_force_field(); fig_timestep(); fig_pbc()
     fig_resolutions(a.aa, a.ua, a.cg); fig_scales(); fig_mapping_lj(); fig_landscape_2d(); fig_clocks()
-    fig_residue_mapping(a.aa, a.cg); fig_em_vs_md(); fig_cost(); fig_funnel()
+    fig_residue_mapping(a.aa, a.cg); fig_em_vs_md(); fig_cost(); fig_funnel(); fig_cell_membranes()
     if a.mem_xtc:
         fig_self_assembly(a.mem_xtc, a.mem_gro)
 

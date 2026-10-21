@@ -207,7 +207,7 @@ md('''
 | `martini_v3.0.0_ffbonded_v2.itp`, `martini_v3.0.0_phospholipids_PC_v2.itp` | parâmetros lipídicos v2 (2025), mesmo repositório |
 | `martini_v3.0.0_solvents_v1.itp`, `martini_v3.0.0_ions_v1.itp` | água W e íons, mesmo repositório |
 | `water.gro` | caixa de 400 beads W equilibrada, biblioteca cgmartini.nl |
-| `viz/` | cartões de etapa (`stage_viewer.py`) e tema Pure Design dos gráficos |
+| `viz/` | visualização das etapas (`simple_view.py`), das réplicas (`replica_views.py`) e gráficos |
 ''')
 
 code('''
@@ -219,9 +219,8 @@ if not cached(mdp_files, 'arquivos .mdp'):
     for f in mdp_files:
         os.system(f'wget -q {REPO}/mdp_martini/{f} -O {f}')
 
-viz_files = ['viz/stage_viewer.py', 'viz/stage.css', 'viz/replica_plots.py', 'viz/replica_views.py',
-             'viz/pure/__init__.py', 'viz/pure/palette.py', 'viz/pure/mpl.py',
-             'viz/pure/tokens.css', 'viz/pure/patterns.css', 'viz/pure/light.css', 'viz/pure/light.js']
+viz_files = ['viz/simple_view.py', 'viz/replica_plots.py', 'viz/replica_views.py',
+             'viz/pure/__init__.py', 'viz/pure/palette.py', 'viz/pure/mpl.py']
 if not cached(viz_files, 'visualizador'):
     os.makedirs('viz/pure', exist_ok=True)
     for f in viz_files:
@@ -248,10 +247,12 @@ sys.path.insert(0, os.path.abspath('viz'))
 import re
 import numpy as np
 import matplotlib.pyplot as plt
-from pure import mpl as pure_mpl, palette
-from stage_viewer import stage, card, style_beads, CHART, INK, BEADS
-pure_mpl.use('light')
-C1 = palette.series(1)[0]
+from pure import palette
+from replica_plots import use_paper_style, finish, COLORS
+from simple_view import stage, card, style_beads, CHART, INK, BEADS
+use_paper_style()                       # mesmo estilo das figuras do README
+C1 = COLORS['protein']                  # proteina: laranja
+CM = COLORS['membrane']                 # membrana: azul
 
 def read_xvg(filepath, ncol=2):
     data = []
@@ -456,7 +457,7 @@ curves = {'All-atom': base + rough_aa + 1.2 * np.exp(-x**2 / 0.05),
 fig, ax = plt.subplots(figsize=(9, 3.8))
 for (name, y), color in zip(curves.items(), palette.series(3)):
     ax.plot(x, y - y.min(), color=color, lw=1.6, label=name)
-pure_mpl.finish(ax, title='Mesma coordenada de reação em três resoluções', subtitle='esquema ilustrativo',
+finish(ax, title='Mesma coordenada de reação em três resoluções', subtitle='esquema ilustrativo',
                 xlabel='Coordenada de reação', ylabel='Energia livre (unidades arbitrárias)')
 ax.set_yticks([])
 plt.show()
@@ -465,6 +466,10 @@ plt.show()
 # ---------------------------------------------------------------- Parte A
 md('''
 # Parte A: Ubiquitina em Água (1UBQ)
+
+**Nesta parte você vai:** converter uma proteína real em modelo Martini, colocá-la numa caixa de água com sal, simular 15 ns e medir quanto cada região se move.
+
+**Por que a ubiquitina.** É uma proteína pequena (76 resíduos) presente em todas as células eucarióticas. Ela funciona como uma etiqueta: enzimas ligam a Gly76 da cauda C-terminal a lisinas de outras proteínas. Cadeias de ubiquitina ligadas pela Lys48 marcam a proteína para ser degradada pelo proteassomo. Esse sistema de degradação é alvo terapêutico: o bortezomibe, inibidor do proteassomo, foi aprovado em 2003 para o tratamento do mieloma múltiplo (Bross *et al.*, 2004). Na análise, você vai ver que a cauda C-terminal é justamente a parte mais móvel da proteína.
 
 Mesma proteína do curso atomístico (`legado/MD_GMX.ipynb`): 76 resíduos, carga líquida zero.
 ''')
@@ -638,8 +643,8 @@ if not cached(['ubq_ions.gro'], 'genion'):
     os.system(f'echo W | gmx genion -s ions.tpr -o ubq_ions.gro -p topol.top -seed {tool_seed("genion")} '
               f'-pname NA -nname CL -np {N_PAIRS} -nn {N_PAIRS} -neutral -quiet 2>&1 | tail -2')
 
-stage('A', 4, 'Íons', structure='ubq_ions.gro', water=False,
-      text=[f'O <code>genion</code> troca {2 * N_PAIRS} beads W por íons. A água está oculta neste cartão para os íons aparecerem.',
+stage('A', 4, 'Íons', structure='ubq_ions.gro',
+      text=[f'O <code>genion</code> troca {2 * N_PAIRS} beads W por íons. A água aparece translúcida para os íons ficarem visíveis.',
             'Com <code>-conc 0.15</code>, o genion contaria 1 bead W como 1 molécula e poria um quarto dos íons. '
             'O número de pares vem do volume da caixa.'],
       legend=['BB', 'SC', 'NA', 'CL'],
@@ -666,12 +671,19 @@ gmx_cached(['em_potential.xvg'], 'energia da minimizacao',
 d = read_xvg('em_potential.xvg')
 fig, ax = plt.subplots(figsize=(7, 3.5))
 ax.plot(d[:, 0], d[:, 1], color=C1, lw=1.2)
-pure_mpl.finish(ax, title='Minimização de energia', subtitle='kJ/mol', xlabel='Passo', ylabel='Energia potencial')
+finish(ax, title='Minimização de energia', subtitle='kJ/mol', xlabel='Passo', ylabel='Energia potencial')
 plt.show()
 
+''')
+
+md('''
+A energia caiu e estabilizou: as sobreposições entre beads foram removidas. Abaixo, o sistema minimizado, com a água translúcida.
+''')
+
+code('''
 log = open('em.log').read()
 fmax = float(re.search(r'Maximum force\\s+=\\s+([\\d.eE+-]+)', log).group(1))
-stage('A', 5, 'Minimização de energia', structure='em.gro', water=False,
+stage('A', 5, 'Minimização de energia', structure='em.gro',
       text=['O steepest descent move cada partícula na direção da força até remover sobreposições entre beads. '
             'Não é dinâmica: não há tempo nem temperatura.',
             'A estrutura quase não muda; o que muda é a energia, que cai até um platô.'],
@@ -702,13 +714,41 @@ gmx_cached(['npt_energy.xvg'], 'temperatura e densidade',
            'printf "Temperature\\\\nDensity\\\\n" | gmx energy -f npt.edr -o npt_energy.xvg')
 
 d = read_xvg('npt_energy.xvg', ncol=3)
-fig, axes = plt.subplots(1, 2, figsize=(11, 3.5))
-axes[0].plot(d[:, 0], d[:, 1], color=C1, lw=0.8)
-pure_mpl.finish(axes[0], title='Temperatura', subtitle='K', xlabel='Tempo (ps)')
-axes[1].plot(d[:, 0], d[:, 2], color=C1, lw=0.8)
-pure_mpl.finish(axes[1], title='Densidade', subtitle='kg/m³', xlabel='Tempo (ps)')
+fig, ax = plt.subplots(figsize=(8, 3.5))
+ax.plot(d[:, 0], d[:, 1], color=C1, lw=0.8)
+finish(ax, title='Temperatura durante o NPT', ylabel='Temperatura', subtitle='K', xlabel='Tempo (ps)')
 plt.show()
+''')
 
+md('''
+**O que se observa:** a temperatura oscila em torno de 310 K.
+
+**Significado:** 310 K é a temperatura do corpo humano. O termostato v-rescale mantém a energia cinética média no alvo; as oscilações são as flutuações naturais de um sistema pequeno.
+''')
+
+code('''
+fig, ax = plt.subplots(figsize=(8, 3.5))
+ax.plot(d[:, 0], d[:, 2], color=C1, lw=0.8)
+finish(ax, title='Densidade durante o NPT', ylabel='Densidade', subtitle='kg/m³', xlabel='Tempo (ps)')
+plt.show()
+print(f'Densidade media na segunda metade: {d[len(d)//2:, 2].mean():.0f} kg/m3')
+''')
+
+md('''
+**O que se observa:** a densidade muda no começo e se estabiliza.
+
+**Significado:** a caixa se ajustou à pressão de 1 bar. Sem essa etapa, a água ficaria comprimida ou rarefeita, e as interações da proteína com o solvente estariam erradas.
+''')
+
+code('''
+
+''')
+
+md('''
+Temperatura e densidade estabilizaram. Abaixo, o sistema ao fim da equilibração, com a água translúcida.
+''')
+
+code('''
 stage('A', 6, 'Equilibração NPT', structure='npt.gro',
       text=['Temperatura e pressão chegam aos valores alvo enquanto o backbone fica preso. '
             'A caixa encolhe ou cresce um pouco até a densidade estabilizar.',
@@ -753,10 +793,13 @@ NSTEPS_PROT = int(re.search(r'nsteps\\s*=\\s*(\\d+)', open('md_prot.mdp').read()
 T_PROT = NSTEPS_PROT * 0.02 / 1000
 
 PERF_CG = performance('md_prot.log')
-stage('A', 7, 'Simulação produtiva', structure='md_prot_anim.pdb', frames=True, box=False,
-      text=[f'Animação da proteína ao longo dos {num(T_PROT)} ns, um quadro a cada 250 ps, já sem rotação e translação globais.',
+from replica_views import export_protein_movie, single_view
+pmovie, pmovie_water = export_protein_movie('.')       # filme completo do sistema: 0 a 15 ns, 31 quadros
+stage('A', 7, 'Simulação produtiva',
+      figure_html=lambda: single_view(pmovie, 'protein', animate=True, water_path=pmovie_water),
+      text=[f'Filme completo dos {num(T_PROT)} ns, um quadro a cada 0,5 ns: proteína, íons e água translúcida, com a proteína centrada na caixa.',
             'As flutuações são pequenas: a rede elástica mantém o enovelamento. As regiões que se movem mais são as que têm menos molas.'],
-      legend=['BB', 'SC'],
+      legend=['BB', 'SC', 'W', 'NA', 'CL'],
       facts={'tempo simulado (ns)': num(T_PROT), 'passo (fs)': 20, 'passos': num(NSTEPS_PROT), 'ns/dia': num(PERF_CG or 0)},
       compare={'aa': ('100 ps no curso atomístico', '', 'O curso atomístico simula 100 ps em 50 000 passos de 2 fs.'),
                'ua': ('dt = 2 fs', '', 'Custo por passo próximo do all-atom em sistemas solvatados: a água é a mesma.'),
@@ -782,21 +825,70 @@ gmx_cached(['gyrate_cg.xvg'], 'Rg',       f'echo Protein | gmx gyrate {ARGS} -o 
 gmx_cached(['mdmat_cg.xpm'],  'contatos', f'echo Protein | gmx mdmat {ARGS} -mean mdmat_cg.xpm')
 
 rmsd, rmsf, rg = read_xvg('rmsd_cg.xvg'), read_xvg('rmsf_cg.xvg'), read_xvg('gyrate_cg.xvg')
-fig, axes = plt.subplots(2, 2, figsize=(12, 8))
-axes[0, 0].plot(rmsd[:, 0] / 1000, rmsd[:, 1], color=C1, lw=0.9)
-pure_mpl.finish(axes[0, 0], title='RMSD dos beads BB', subtitle='nm', xlabel='Tempo (ns)')
-axes[0, 1].plot(rmsf[:, 0], rmsf[:, 1], color=C1, lw=1.0)
-pure_mpl.finish(axes[0, 1], title='RMSF por resíduo', subtitle='nm', xlabel='Resíduo')
-axes[1, 0].plot(rg[:, 0] / 1000, rg[:, 1], color=C1, lw=0.9)
-pure_mpl.finish(axes[1, 0], title='Raio de giração', subtitle='nm', xlabel='Tempo (ns)')
-im = axes[1, 1].imshow(xpm_to_distance_matrix('mdmat_cg.xpm'), cmap='pure_r', origin='lower',
-                       extent=[1, N_RES, 1, N_RES], vmax=1.5)
-pure_mpl.finish(axes[1, 1], title='Distância mínima média entre resíduos', subtitle='nm', xlabel='Resíduo')
-plt.colorbar(im, ax=axes[1, 1])
+fig, ax = plt.subplots(figsize=(8, 3.5))
+ax.plot(rmsd[:, 0] / 1000, rmsd[:, 1], color=C1, lw=0.9)
+finish(ax, title='RMSD dos beads de backbone', ylabel='RMSD', subtitle='nm', xlabel='Tempo (ns)')
 plt.show()
+''')
 
+md('''
+**O que se observa:** o RMSD sobe no primeiro nanossegundo e passa a oscilar em torno de 0,2 nm.
+
+**Significado:** a proteína relaxa da forma do cristal para a forma em solução e depois só flutua. Com a rede elástica, um RMSD baixo é imposto pelo modelo: ele não prova que a proteína é estável, apenas que as molas a seguram.
+''')
+
+code('''
+fig, ax = plt.subplots(figsize=(8, 3.5))
+ax.plot(rmsf[:, 0], rmsf[:, 1], color=C1, lw=1.1)
+finish(ax, title='RMSF por resíduo', ylabel='RMSF', subtitle='nm', xlabel='Resíduo')
+plt.show()
+''')
+
+md('''
+**O que se observa:** a maior parte da cadeia flutua menos de 0,1 nm; há picos perto do resíduo 9, nos resíduos 46-47 e na cauda C-terminal (72-76).
+
+**Significado:** flexibilidade é função. A Gly76 da cauda C-terminal é o ponto em que a ubiquitina se liga covalentemente a lisinas de outras proteínas para marcá-las; a cauda precisa ser móvel para isso. A alça do resíduo 8 fica junto da Ile44 e da Val70, a região hidrofóbica que proteínas parceiras reconhecem.
+''')
+
+code('''
+fig, ax = plt.subplots(figsize=(8, 3.5))
+ax.plot(rg[:, 0] / 1000, rg[:, 1], color=C1, lw=0.9)
+finish(ax, title='Raio de giração', ylabel='Rg', subtitle='nm', xlabel='Tempo (ns)')
+plt.show()
+''')
+
+md('''
+**O que se observa:** o raio de giração fica praticamente constante.
+
+**Significado:** a proteína continua compacta, sem expandir nem desenovelar. Uma proteína que desenovela mostra o Rg crescendo.
+''')
+
+code('''
+fig, ax = plt.subplots(figsize=(6.2, 5.4))
+im = ax.imshow(xpm_to_distance_matrix('mdmat_cg.xpm'), cmap='viridis_r', origin='lower',
+               extent=[1, N_RES, 1, N_RES], vmax=1.5)
+finish(ax, title='Distância mínima média entre resíduos', xlabel='Resíduo', ylabel='Resíduo')
+plt.colorbar(im, ax=ax, label='nm')
+plt.show()
+''')
+
+md('''
+**O que se observa:** a diagonal escura são resíduos vizinhos na sequência; os blocos escuros longe da diagonal são resíduos distantes na sequência mas próximos no espaço.
+
+**Significado:** é a impressão digital do enovelamento. As faixas perpendiculares à diagonal são fitas β pareadas na folha; os blocos entre a hélice (resíduos 23-34) e a folha mostram a hélice apoiada sobre ela.
+''')
+
+code('''
+
+''')
+
+md('''
+Os gráficos resumem os 15 ns. Abaixo, a estrutura no último quadro e os números principais.
+''')
+
+code('''
 top_res = rmsf[np.argsort(rmsf[:, 1])[-4:][::-1], 0].astype(int)
-stage('A', 8, 'Análise', structure='md_prot.gro', water=False,
+stage('A', 8, 'Análise', structure='md_prot.gro',
       text=['A rede elástica mantém o RMSD baixo e estável: ele não mede enovelamento, porque as molas impedem o desenovelamento.',
             'O RMSF continua informativo. A cauda C-terminal tem poucas molas e é a região mais móvel, como na simulação atomística.'],
       legend=['BB', 'SC', 'NA', 'CL'],
@@ -877,6 +969,10 @@ md('''
 md('''
 # Parte B: Automontagem de uma Bicamada Lipídica (DSPC)
 
+**Nesta parte você vai:** espalhar 128 lipídios ao acaso numa caixa de água, deixar a simulação correr e ver a membrana se formar sozinha; depois medir sua espessura e a área de cada lipídio.
+
+**Por que isso importa.** Toda célula é delimitada por uma bicamada lipídica, e ninguém a monta peça por peça: ela se forma porque as caudas apolares evitam a água. É o mesmo princípio que forma lipossomos, as vesículas usadas para entregar fármacos e as vacinas de mRNA em nanopartículas lipídicas.
+
 Lipídios distribuídos ao acaso em água se organizam sozinhos em uma bicamada, guiados pelo efeito hidrofóbico. O sistema segue o tutorial oficial do Martini 3:
 
 | Componente | Quantidade |
@@ -944,6 +1040,13 @@ stage('B', 2, 'Lipídios em posições aleatórias', structure='mem_noW.gro',
       text=['128 lipídios em posições e orientações sorteadas. Não há membrana, micela nem qualquer ordem: é o estado inicial.'],
       legend=['NC3', 'PO4', 'GL', 'C'],
       facts={'lipídios': 128, 'beads': num(count_particles('mem_noW.gro')), 'aresta da caixa (nm)': '7,5', 'tentativas por lipídio': 500})
+''')
+
+md('''
+A mesma caixa com a água: os beads W preenchem os espaços entre os lipídios.
+''')
+
+code('''
 stage('B', 3, 'Solvatação', structure='mem_solv.gro',
       text=['1 536 beads W, 12 por lipídio.'],
       legend=['NC3', 'PO4', 'GL', 'C', 'W'],
@@ -977,11 +1080,13 @@ N_FRAMES = open('mem_anim.pdb').read().count('MODEL')
 T_SIM = float(re.search(r'nsteps\\s*=\\s*(\\d+)', open('md_membrane.mdp').read()).group(1)) * 0.02 / 1000
 
 PERF_MEM = performance('mem_md.log')
-stage('B', 5, 'Automontagem', structure='mem_anim.pdb', frames=True, box=False,
-      text=['Apenas os lipídios, um quadro a cada 0,5 ns. A sequência típica é agregação em micelas pequenas, '
+from replica_views import export_movie, single_view
+movie, movie_water = export_movie('.')            # 0 a 15 ns, um quadro a cada 0,5 ns
+stage('B', 5, 'Automontagem', figure_html=lambda: single_view(movie, 'membrane', animate=True, water_path=movie_water),
+      text=['Filme completo de 0 a 15 ns, um quadro a cada 0,5 ns, com a água translúcida e a normal final da bicamada na vertical. A sequência típica é agregação em micelas pequenas, '
             'fusão em uma estrutura contínua e organização em duas camadas com as caudas voltadas para dentro.',
             'A bicamada pode surgir em qualquer plano da caixa e atravessar a borda periódica.'],
-      legend=['NC3', 'PO4', 'GL', 'C'],
+      legend=['NC3', 'PO4', 'GL', 'C', 'W'],
       facts={'tempo simulado (ns)': num(T_SIM), 'passo (fs)': 20, 'quadros': N_FRAMES, 'ns/dia': num(PERF_MEM or 0)},
       compare={'aa': ('CHARMM36', '', 'Possível, mas caro: dezenas de nanossegundos com ~27 mil átomos.'),
                'ua': ('GROMOS / Berger', '', 'A automontagem de DPPC em bicamada foi simulada em united-atom por Marrink et al. (2001).'),
@@ -1024,13 +1129,34 @@ o = np.load('mem_order.npz')
 t_ns, S, normal = o['t_ns'], o['S'], o['normal']
 
 pot = read_xvg('mem_potential.xvg')
-fig, axes = plt.subplots(1, 2, figsize=(12, 3.8))
-axes[0].plot(pot[:, 0] / 1000, pot[:, 1], color=C1, lw=0.6)
-pure_mpl.finish(axes[0], title='Energia potencial', subtitle='kJ/mol', xlabel='Tempo (ns)')
-axes[1].plot(t_ns, S, color=C1, lw=1.0)
-axes[1].set_ylim(0, 1)
-pure_mpl.finish(axes[1], title='Parâmetro de ordem S', xlabel='Tempo (ns)')
+fig, ax = plt.subplots(figsize=(8, 3.5))
+ax.plot(pot[:, 0] / 1000, pot[:, 1], color=CM, lw=0.7)
+ax.set_ylim(pot[pot[:, 0] > 200, 1].min() - 300, pot[pot[:, 0] > 200, 1].max() + 300)
+finish(ax, title='Energia potencial durante a automontagem', ylabel='Energia', subtitle='kJ/mol', xlabel='Tempo (ns)')
 plt.show()
+''')
+
+md('''
+**O que se observa:** a energia cai rápido no começo e depois em degraus, até estabilizar.
+
+**Significado:** cada degrau é um rearranjo: lipídios se agregando, agregados se fundindo, a bicamada se fechando. A energia cai porque as caudas apolares deixam de tocar a água e passam a tocar outras caudas. É o efeito hidrofóbico que monta as membranas das células.
+''')
+
+code('''
+fig, ax = plt.subplots(figsize=(8, 3.5))
+ax.plot(t_ns, S, color=CM, lw=1.1)
+ax.set_ylim(0, 1)
+finish(ax, title='Parâmetro de ordem S', ylabel='S', xlabel='Tempo (ns)')
+plt.show()
+''')
+
+md('''
+**O que se observa:** o S começa perto de 0,2 (orientações ao acaso) e, quando a bicamada se forma, sobe para cerca de 0,7.
+
+**Significado:** os lipídios passam a apontar todos na mesma direção, perpendicular ao plano da membrana. O momento da subida é o tempo de formação da bicamada.
+''')
+
+code('''
 
 above = np.where(S > 0.5)[0]
 T_FORM = t_ns[above[0]] if len(above) else None
@@ -1091,9 +1217,9 @@ DIM = int(pc['dim'][-1])
 FORMED = bool(DIM == 2 and S[-1] > 0.5)
 
 fig, ax = plt.subplots(figsize=(8, 2.8))
-ax.step(pc['t_ns'], pc['dim'], where='mid', color=C1, lw=1.6)
+ax.step(pc['t_ns'], pc['dim'], where='mid', color=CM, lw=1.6)
 ax.set_yticks([0, 1, 2, 3]); ax.set_yticklabels([STRUCT[k] for k in range(4)]); ax.set_ylim(-0.4, 3.4)
-pure_mpl.finish(ax, title='Estrutura do agregado de caudas ao longo do tempo', xlabel='Tempo (ns)')
+finish(ax, title='Estrutura do agregado de caudas ao longo do tempo', xlabel='Tempo (ns)')
 plt.show()
 print(f'Estrutura final: {STRUCT[DIM]} (dimensao {DIM}) | S final {S[-1]:.2f} | bicamada formada: {"sim" if FORMED else "nao"}')
 ''')
@@ -1139,10 +1265,20 @@ if FORMED:
                'printf "Box-X\\\\nBox-Z\\\\n" | gmx energy -f mem_eq.edr -o mem_eq_box.xvg')
     box = read_xvg('mem_eq_box.xvg', ncol=3)
     fig, ax = plt.subplots(figsize=(8, 3.2))
-    ax.plot(box[:, 0] / 1000, box[:, 1], color=CHART[0], lw=1.2, label='x = y (plano da membrana)')
-    ax.plot(box[:, 0] / 1000, box[:, 2], color=CHART[1], lw=1.2, label='z (normal)')
-    pure_mpl.finish(ax, title='Caixa durante a equilibração semi-isotrópica', subtitle='nm', xlabel='Tempo (ns)')
+    ax.plot(box[:, 0] / 1000, box[:, 1], color=CM, lw=1.2, label='x = y (plano da membrana)')
+    ax.plot(box[:, 0] / 1000, box[:, 2], color=CM, lw=1.2, ls=(0, (6, 3)), label='z (normal)')
+    finish(ax, title='Caixa durante a equilibração semi-isotrópica', subtitle='nm', xlabel='Tempo (ns)')
     plt.show()
+else:
+    print('Bicamada nao formada nesta replica: equilibracao semi-isotropica nao se aplica.')
+''')
+
+md('''
+A caixa deixou de ser cúbica. Abaixo, a bicamada ao fim da equilibração semi-isotrópica, vista na orientação em que foi girada (normal em z).
+''')
+
+code('''
+if FORMED:
     stage('B', 6, 'Equilibração semi-isotrópica', structure='mem_eq.gro',
           text=['A caixa deixou de ser cúbica: o plano da membrana e a normal se ajustam de forma independente.',
                 'Espessura e área por lipídio são medidas nesta trajetória.'],
@@ -1181,7 +1317,7 @@ if FORMED:
     for name, idx in groups.items():
         h, _ = np.histogram(zc[:, idx].ravel(), bins=bins)
         ax.plot(mid, h / last.n_frames, label=name, color=gcolor[name], lw=1.6)
-    pure_mpl.finish(ax, title='Perfil de densidade ao longo da normal', subtitle='beads por fatia',
+    finish(ax, title='Perfil de densidade ao longo da normal', subtitle='beads por fatia',
                     xlabel='Distância ao centro da bicamada (nm)')
     plt.show()
     h_po4, _ = np.histogram(zc[:, po4e].ravel(), bins=bins)
@@ -1195,6 +1331,13 @@ else:
     upper = lower = None
     print(f'Bicamada nao se formou nesta replica ({STRUCT[DIM]}): espessura e area nao se aplicam.')
 
+''')
+
+md('''
+O perfil de densidade mostra as duas monocamadas. Abaixo, a estrutura final da bicamada usada nas medidas, com a água translúcida.
+''')
+
+code('''
 stage('B', 7, 'Bicamada formada' if FORMED else 'Estado final: sem bicamada plana',
       structure='mem_eq.gro' if FORMED else 'mem_md.gro',
       text=(['As cabeças (NC3, PO4) ficam voltadas para a água e as caudas formam o núcleo apolar.',
@@ -1261,78 +1404,239 @@ A célula usa o `summary.json` desta réplica e baixa do GitHub os resumos das o
 ''')
 
 code('''
-from replica_plots import load_summaries, plot_replicas, plot_means, plot_scalars
+from replica_plots import load_summaries, plot_metric, plot_scalar
 sums = load_summaries(BASE_DIR, REPO)
 print('Replicas disponiveis:', sorted(sums))
 
-with plt.rc_context({'savefig.facecolor': 'white'}):   # fundo branco no estilo de figura de artigo
-    plot_replicas(sums, ss=SS); plt.show()
-    plot_means(sums, ss=SS); plt.show()
-    fig, stats = plot_scalars(sums); plt.show()
 names = {'t_form': ('Formacao da bicamada', 'ns'), 'd_pp': ('Espessura D_PP', 'nm'), 'apl': ('Area por lipidio', 'nm2')}
-for k, (m, sd, n) in stats.items():
-    print(f'{names[k][0]}: {m:.3f} +- {sd:.3f} {names[k][1]} (n = {n})')
+''')
+
+md('''
+### Proteína: RMSD
+''')
+
+code('''
+plot_metric(sums, 'rmsd', 'replicas'); plt.show()
+''')
+
+md('''
+**O que se observa:** as três réplicas sobem e oscilam na mesma faixa, entre 0,15 e 0,25 nm.
+
+**Significado:** o comportamento da proteína é reprodutível. As diferenças entre as linhas são flutuação térmica, não comportamentos diferentes.
+''')
+
+code('''
+plot_metric(sums, 'rmsd', 'mean'); plt.show()
+''')
+
+md('''
+**O que se observa:** a faixa de desvio padrão é estreita.
+
+**Significado:** quando as réplicas concordam, a média representa bem o sistema.
+
+### Proteína: RMSF por resíduo
+''')
+
+code('''
+plot_metric(sums, 'rmsf', 'replicas', ss=SS); plt.show()
+''')
+
+md('''
+**O que se observa:** os picos caem nos mesmos resíduos nas três réplicas: perto do 9, em 46-47 e na cauda C-terminal. A faixa cinza é a α-hélice, uma das regiões mais rígidas.
+
+**Significado:** a flexibilidade de cada região é propriedade da proteína, não de uma corrida.
+''')
+
+code('''
+plot_metric(sums, 'rmsf', 'mean', ss=SS); plt.show()
+''')
+
+md('''
+### Membrana: parâmetro de ordem
+''')
+
+code('''
+plot_metric(sums, 'S', 'replicas'); plt.show()
+''')
+
+md('''
+**O que se observa:** em duas réplicas, o S sobe de ~0,2 para ~0,7 entre 4 e 7 ns; na terceira, fica perto de 0,2 e só começa a subir no fim.
+
+**Significado:** a formação da bicamada é um evento cinético. O destino final é o mesmo, mas o tempo para chegar lá depende da semente, e uma corrida pode não chegar no tempo simulado.
+''')
+
+code('''
+plot_metric(sums, 'S', 'mean'); plt.show()
+''')
+
+md('''
+**O que se observa:** depois de 6 ns a faixa de desvio fica larga, e a média para em ~0,5.
+
+**Significado:** a média esconde que duas réplicas formaram a bicamada e uma não. Nenhuma réplica tem S = 0,5. Olhe sempre as réplicas antes de confiar na média.
+
+### Membrana: energia potencial
+''')
+
+code('''
+plot_metric(sums, 'pot', 'replicas'); plt.show()
+''')
+
+md('''
+**O que se observa:** a energia cai nas três réplicas; a que não formou a bicamada termina um pouco acima das outras.
+
+**Significado:** a bicamada é o estado de menor energia. A réplica sem bicamada parou num vale mais raso da paisagem energética.
+
+### Membrana: valores finais
+''')
+
+code('''
+fig, stat = plot_scalar(sums, 't_form'); plt.show()
+''')
+
+md('''
+**Tempo de formação.** Com só duas réplicas que formaram a bicamada, o desvio padrão é uma estimativa grosseira: para um tempo confiável seriam necessárias muitas réplicas.
+''')
+
+code('''
+fig, stat = plot_scalar(sums, 'd_pp'); plt.show()
+''')
+
+md('''
+**Espessura.** Distância entre os planos de fosfato das duas monocamadas, da ordem de 4 nm, como nas membranas das células. As duas réplicas concordam bem.
+''')
+
+code('''
+fig, stat = plot_scalar(sums, 'apl'); plt.show()
+''')
+
+md('''
+**Área por lipídio.** Cerca de 0,60 nm²: o espaço que cada lipídio ocupa no plano da membrana. Quanto maior a área, mais fluida e permeável a membrana; colesterol e caudas saturadas diminuem a área, caudas insaturadas aumentam.
+''')
+
+code('''
+# Resumo numerico da triplicata (so replicas em que a bicamada se formou)
+for k, (label, unit) in names.items():
+    v = np.array([x['membrane'][k] for x in sums.values() if x.get('membrane', {}).get(k) is not None])
+    if len(v):
+        print(f'{label}: {v.mean():.3f} +- {v.std(ddof=1) if len(v) > 1 else 0:.3f} {unit} (n = {len(v)})')
 ''')
 
 md('''
 ## Réplicas lado a lado em 3D
 
-Os três visualizadores de cada cartão são ligados: girar ou aproximar um move os outros dois, e as animações andam juntas. Cores e representação seguem a convenção do Martini no VMD: bastões nas ligações entre beads, esferas nas cabeças polares e água translúcida.
+Cada réplica tem o próprio visualizador, seguido do resultado dela. Cores e representação seguem a convenção do Martini no VMD: bastões nas ligações entre beads, esferas nas cabeças polares e água translúcida.
 ''')
 
 code('''
 import os
-from replica_views import export_replica, triple_view, SEM
+from replica_views import export_replica, single_view, SEM
+from simple_view import _legend as card_legend
+from IPython.display import Markdown, display
 
 export_replica('.')                                   # arquivos de visualizacao desta replica
 VIZ = os.path.join(BASE_DIR, 'summaries', 'viz')
 os.makedirs(VIZ, exist_ok=True)
 
 def viz_path(r, kind):
-    own = os.path.join(BASE_DIR, f'rep{r}', f'viz_{kind}.pdb')
+    ext = 'xyz' if kind.endswith('water') else 'pdb'          # agua em XYZ: arquivo menor
+    own = os.path.join(BASE_DIR, f'rep{r}', f'viz_{kind}.{ext}')
     if os.path.exists(own) and os.path.getsize(own):
         return own
-    remote = os.path.join(VIZ, f'rep{r}_{kind}.pdb')
+    remote = os.path.join(VIZ, f'rep{r}_{kind}.{ext}')
     if not os.path.exists(remote) or os.path.getsize(remote) == 0:
-        os.system(f'wget -q {REPO}/results/viz/rep{r}_{kind}.pdb -O {remote}')
+        os.system(f'wget -q {REPO}/results/viz/rep{r}_{kind}.{ext} -O {remote}')
     return remote
 
 state = {r: ('bicamada' if s.get('membrane', {}).get('formed') else 'sem bicamada') for r, s in sums.items()}
 LEG_PROT = [('Backbone (BB)', SEM['protein']), ('Cadeia lateral (SC)', SEM['protein_sc'])]
 LEG_MEM = [('Colina NC3', SEM['head_cat']), ('Fosfato PO4', SEM['po4']), ('Glicerol GL1, GL2', SEM['glyc']),
            ('Caudas', SEM['tail']), ('Água W', SEM['water'])]
-
-card('Réplicas lado a lado', 'Ubiquitina: 15 ns em três réplicas',
-     triple_view([viz_path(r, 'prot') for r in (1, 2, 3)], 'protein', [f'Réplica {r}' for r in (1, 2, 3)],
-                 animate=True),
-     text=['A rede elástica mantém o enovelamento nas três réplicas; o que se move é a cauda C-terminal e as alças.'],
-     legend=LEG_PROT)
-
 for r in (1, 2, 3):
-    viz_path(r, 'mem_water')                          # agua em modelo separado, translucido
+    for kind in ('prot', 'prot_water', 'mem_final', 'mem_water', 'mem_anim', 'mem_anim_water'):
+        viz_path(r, kind)
+print('Arquivos de visualizacao das tres replicas prontos.')
+''')
 
-card('Réplicas lado a lado', 'Membrana: estado final',
-     triple_view([viz_path(r, 'mem_final') for r in (1, 2, 3)], 'membrane',
-                 [f'Réplica {r}: {state.get(r, "?")}' for r in (1, 2, 3)], height=460),
-     text=['Bicamadas vistas de perfil, com a normal na vertical. A mesma receita, com sementes diferentes, '
-           'leva a bicamadas em duas réplicas e a uma fase contínua na terceira.'],
-     legend=LEG_MEM)
+md('''
+### Ubiquitina nas três réplicas
+
+As três partem da mesma estrutura. Arraste para girar; a animação cobre os 15 ns. Observe que a forma geral se mantém: a rede elástica segura o enovelamento.
 ''')
 
 code('''
-card('Réplicas lado a lado', 'Automontagem: 0 a 15 ns',
-     triple_view([viz_path(r, 'mem_anim') for r in (1, 2, 3)], 'membrane', [f'Réplica {r}' for r in (1, 2, 3)],
-                 height=460, animate=True, water=False),
-     text=['Só os lipídios, um quadro por nanossegundo. Compare o momento em que as cabeças se separam em duas camadas.'],
-     legend=LEG_MEM[:4])
+for r in (1, 2, 3):
+    m = sums.get(r, {}).get('protein', {})
+    rmsd = np.array(m.get('rmsd', [0]))
+    display(Markdown(f'**Réplica {r}**: RMSD médio na segunda metade {num(rmsd[len(rmsd)//2:].mean(), 3)} nm'))
+    single_view(viz_path(r, 'prot'), 'protein', animate=True, water_path=viz_path(r, 'prot_water'))
+card_legend(LEG_PROT)
+''')
+
+md('''
+### Membrana: estado final das três réplicas
+
+Bicamadas vistas de perfil, com a normal na vertical e a água translúcida. A mesma receita, com sementes diferentes: compare as três antes de ler o resultado de cada uma.
+''')
+
+code('''
+for r in (1, 2, 3):
+    m = sums.get(r, {}).get('membrane', {})
+    if m.get('formed'):
+        txt = f'bicamada formada aos {num(m["t_form"], 1)} ns; espessura {num(m["d_pp"], 2)} nm, área por lipídio {num(m["apl"], 3)} nm²'
+    else:
+        txt = f'sem bicamada em 15 ns (S final {num(m["S"][-1], 2) if m.get("S") else "?"})'
+    display(Markdown(f'**Réplica {r}**: {txt}'))
+    single_view(viz_path(r, 'mem_final'), 'membrane', water_path=viz_path(r, 'mem_water'))
+card_legend(LEG_MEM)
+''')
+
+md('''
+### Automontagem nas três réplicas
+
+Um quadro por nanossegundo, com a água translúcida e a normal final na vertical. Em cada réplica, observe em que momento as cabeças se separam em duas camadas.
+''')
+
+code('''
+for r in (1, 2, 3):
+    display(Markdown(f'**Réplica {r}**: {state.get(r, "?")} ao fim de 15 ns'))
+    single_view(viz_path(r, 'mem_anim'), 'membrane', animate=True, water_path=viz_path(r, 'mem_anim_water'))
+card_legend(LEG_MEM)
 ''')
 
 md('''
 ### Início e fim em projeção ortográfica
 
+**Membrana.** Primeira coluna: o início, com os lipídios espalhados pela caixa. Segunda: o fim visto de lado. Terceira: o fim visto de cima. As réplicas 1 e 2 mostram duas camadas de cabeças (azul e vermelho) separadas pelo núcleo de caudas (cinza); a réplica 3 terminou numa estrutura conectada.
+
 ![Membrana: início e fim nas três réplicas](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/martini_vistas_membrana.png)
 
+**Proteína.** As três réplicas partem da mesma estrutura e terminam com a mesma forma geral; o que muda é a posição da cauda C-terminal, a parte flexível. Primeira coluna: o início; segunda: o fim visto de frente; terceira: o fim girado 90°.
+
 ![Ubiquitina: início e fim nas três réplicas](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/martini_vistas_proteina.png)
+''')
+
+md('''
+# Membranas reais: células normais, de câncer e bactérias
+
+A bicamada desta aula tem um único lipídio. Membranas de verdade misturam dezenas, e a composição de cada lado é diferente. Essa diferença decide como moléculas e fármacos interagem com cada tipo de célula.
+
+![Composição das membranas](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_membranas_celulas.png)
+
+| Membrana | Monocamada externa | Monocamada interna | Superfície externa |
+|----------|--------------------|--------------------|--------------------|
+| Célula humana normal | PC, esfingomielina, colesterol | PE, PS, PC, colesterol | neutra |
+| Célula de câncer | PC, esfingomielina, colesterol e **PS exposta** | PE, PS, PC, colesterol | aniônica |
+| Bactéria (membrana interna de *E. coli*) | PE, PG, cardiolipina | igual à externa | aniônica, sem colesterol |
+
+**Célula normal.** A célula gasta energia para manter a PS, um lipídio com carga negativa, só na face interna. Por fora, a membrana é neutra e rica em colesterol (van Meer *et al.*, 2008).
+
+**Célula de câncer.** Muitas células tumorais perdem essa assimetria e expõem PS na face externa. Células tumorais de melanoma e carcinoma mostraram de 3 a 7 vezes mais PS na face externa que queratinócitos normais (Utsugi *et al.*, 1991). A superfície fica negativa, e isso é explorado no desenvolvimento de peptídeos anticâncer e de moléculas que reconhecem PS.
+
+**Bactéria.** A membrana interna de *E. coli* é formada principalmente por PE, com PG e cardiolipina, ambos negativos, e não tem colesterol (Sohlenkamp e Geiger, 2016). A composição varia entre espécies e condições de crescimento.
+
+**Exemplo translacional: peptídeos antimicrobianos.** Peptídeos do sistema imune, como magainina e LL-37, são catiônicos (carga positiva). Eles são atraídos pelas superfícies negativas das bactérias e interagem pouco com a superfície neutra e rica em colesterol das células humanas. Essa é uma das bases da seletividade que se busca em novos antibióticos (Zasloff, 2002). Os mesmos princípios valem para peptídeos que atacam células de câncer.
+
+**Como simular essas membranas.** Todos esses lipídios têm parâmetros no Martini 3 (repositório M3-Lipid-Parameters: PC, PE, PS, PG, SM, cardiolipina e colesterol). Trocar a bicamada desta aula por uma membrana bacteriana ou tumoral é mudar a composição de entrada; o restante do protocolo é o mesmo.
 ''')
 
 md('''
@@ -1363,6 +1667,11 @@ md('''
 - Marrink, S. J.; Risselada, H. J.; Yefimov, S.; Tieleman, D. P.; de Vries, A. H. The MARTINI force field: coarse grained model for biomolecular simulations. *J. Phys. Chem. B* **2007**, *111*, 7812-7824. https://doi.org/10.1021/jp071097f
 - Marrink, S. J.; Lindahl, E.; Edholm, O.; Mark, A. E. Simulation of the spontaneous aggregation of phospholipids into bilayers. *J. Am. Chem. Soc.* **2001**, *123*, 8638-8639. https://doi.org/10.1021/ja0159618
 - McGibbon, R. T. *et al.* MDTraj: a modern open library for the analysis of molecular dynamics trajectories. *Biophys. J.* **2015**, *109*, 1528-1532. https://doi.org/10.1016/j.bpj.2015.08.015
+- van Meer, G.; Voelker, D. R.; Feigenson, G. W. Membrane lipids: where they are and how they behave. *Nat. Rev. Mol. Cell Biol.* **2008**, *9*, 112-124. https://doi.org/10.1038/nrm2330
+- Utsugi, T.; Schroit, A. J.; Connor, J.; Bucana, C. D.; Fidler, I. J. Elevated expression of phosphatidylserine in the outer membrane leaflet of human tumor cells and recognition by activated human blood monocytes. *Cancer Res.* **1991**, *51*, 3062-3066. PMID 2032247
+- Sohlenkamp, C.; Geiger, O. Bacterial membrane lipids: diversity in structures and pathways. *FEMS Microbiol. Rev.* **2016**, *40*, 133-159. https://doi.org/10.1093/femsre/fuv008
+- Zasloff, M. Antimicrobial peptides of multicellular organisms. *Nature* **2002**, *415*, 389-395. https://doi.org/10.1038/415389a
+- Bross, P. F. *et al.* Approval summary for bortezomib for injection in the treatment of multiple myeloma. *Clin. Cancer Res.* **2004**, *10*, 3954-3964. https://doi.org/10.1158/1078-0432.CCR-03-0781
 - Tutorial Martini 3, *Lipid bilayers, Part I: Self-assembly*: https://cgmartini.nl/docs/tutorials/Martini3/LipidsI/
 ''')
 

@@ -16,7 +16,7 @@ for rep in "$BASE"/rep*; do
   dst="$TMP/rep$n"; mkdir -p "$dst"
   # Fica de fora o que o notebook baixa ou regenera em segundos
   rsync -a --exclude='viz' --exclude='*.mdp' --exclude='martini_v3.0.0*.itp' \
-    --exclude='water.gro' --exclude='*.trr' --exclude='md_prot_pbc.xtc' \
+    --exclude='water.gro' --exclude='*.trr' \
     --exclude='rep.tar.gz' \
     --exclude='._*' --exclude='.DS_Store' --exclude='*.cpt' "$rep/" "$dst/"
   grep -rIlE "/private/tmp/|/Volumes/|/Users/|$HOST_S|$USER_NAME" "$dst" | while read -r f; do
