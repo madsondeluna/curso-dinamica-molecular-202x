@@ -1786,21 +1786,6 @@ md('''
 - Tutorial Martini 3, *Lipid bilayers, Part I: Self-assembly*: https://cgmartini.nl/docs/tutorials/Martini3/LipidsI/
 ''')
 
-md('''
-## Autoria e repositório
-
-| | |
-|---|---|
-| Autor | **Madson A. de Luna-Aragão**, MSc |
-| Vínculos | Programa Interunidades de Pós-Graduação em Bioinformática, Universidade Federal de Minas Gerais (UFMG), Belo Horizonte, Brasil<br>Centre National de la Recherche Scientifique (CNRS), Institut de Biologie et Chimie des Protéines (IBCP), Lyon, França |
-| E-mail | [madsondeluna@gmail.com](mailto:madsondeluna@gmail.com) |
-| Site | [madsondeluna.com](https://madsondeluna.com) |
-| GitHub | [github.com/madsondeluna](https://github.com/madsondeluna) |
-| LinkedIn | [linkedin.com/in/madsonaragao](https://www.linkedin.com/in/madsonaragao/) |
-| Repositório | [madsondeluna/curso-dinamica-molecular-202x](https://github.com/madsondeluna/curso-dinamica-molecular-202x) |
-| Guia da aula | [README com todas as figuras](https://github.com/madsondeluna/curso-dinamica-molecular-202x#readme) |
-''')
-
 nb = {"cells": cells,
       "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
                    "language_info": {"name": "python"}, "colab": {"provenance": []}},

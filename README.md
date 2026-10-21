@@ -32,7 +32,6 @@ Material de aula executável no Google Colab: uma proteína e uma membrana que s
 - [Material legado: curso atomístico](#material-legado-curso-atomístico)
 - [Referência técnica](#referência-técnica)
 - [Referências](#referências)
-- [Autoria](#autoria)
 
 
 ## Roteiro da aula
@@ -526,18 +525,6 @@ rvdw                     = 1.1
 - Inputs do tutorial de Lemkul: https://github.com/Lemkul-Lab/gmx_tutorials_jpcb
 - Manual do GROMACS: https://manual.gromacs.org/
 
-
-## Autoria
-
-| | |
-|---|---|
-| Autor | **Madson A. de Luna-Aragão**, MSc |
-| Vínculos | Programa Interunidades de Pós-Graduação em Bioinformática, Universidade Federal de Minas Gerais (UFMG), Belo Horizonte, Brasil<br>Centre National de la Recherche Scientifique (CNRS), Institut de Biologie et Chimie des Protéines (IBCP), Lyon, França |
-| E-mail | [madsondeluna@gmail.com](mailto:madsondeluna@gmail.com) |
-| Site | [madsondeluna.com](https://madsondeluna.com) |
-| GitHub | [github.com/madsondeluna](https://github.com/madsondeluna) |
-| LinkedIn | [linkedin.com/in/madsonaragao](https://www.linkedin.com/in/madsonaragao/) |
-| Repositório | [madsondeluna/curso-dinamica-molecular-202x](https://github.com/madsondeluna/curso-dinamica-molecular-202x) |
 
 ## Licença
 
