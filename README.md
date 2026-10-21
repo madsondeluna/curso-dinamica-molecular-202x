@@ -67,7 +67,7 @@ A MD resolve as equações de Newton para todas as partículas, passo a passo. A
 
 A energia potencial é a soma de termos simples. Os **ligados** mantêm a geometria da molécula; os **não ligados** agem entre pares: Lennard-Jones (repulsão de curto alcance e atração de van der Waals) e Coulomb (cargas). Um campo de força é o conjunto de parâmetros desses termos para cada tipo de partícula.
 
-$$U = \sum_{lig} \tfrac{1}{2}k_b(r-r_0)^2 + \sum_{ang} \tfrac{1}{2}k_\theta(\theta-\theta_0)^2 + \sum_{died} k_\phi[1+\cos(n\phi-\delta)] + \sum_{i<j} 4\varepsilon_{ij}\left[\left(\tfrac{\sigma_{ij}}{r_{ij}}\right)^{12}-\left(\tfrac{\sigma_{ij}}{r_{ij}}\right)^{6}\right] + \sum_{i<j} \frac{q_iq_j}{4\pi\varepsilon_0\varepsilon_r r_{ij}}$$
+$$U = \sum_{lig} \tfrac{1}{2}k_b(r-r_0)^2 + \sum_{ang} \tfrac{1}{2}k_\theta(\theta-\theta_0)^2 + \sum_{died} k_\phi[1+\cos(n\phi-\delta)] + \sum_{i \lt j} 4\varepsilon_{ij}\left[\left(\tfrac{\sigma_{ij}}{r_{ij}}\right)^{12}-\left(\tfrac{\sigma_{ij}}{r_{ij}}\right)^{6}\right] + \sum_{i \lt j} \frac{q_iq_j}{4\pi\varepsilon_0\varepsilon_r r_{ij}}$$
 
 ![Termos do campo de força](imagens/fund_campo_de_forca.png)
 
