@@ -319,23 +319,18 @@ def read_xvg(filepath, ncol=2):
     return np.array(data)
 
 def xpm_to_distance_matrix(fname):
-    with open(fname) as f:
-        strings = re.findall(r'"([^"]*)"', f.read())
-    for i0, s in enumerate(strings):
-        parts = s.split()
-        if len(parts) == 4 and all(p.isdigit() for p in parts):
-            w, h, nc, cpp = map(int, parts)
-            break
-    values, keys = [], []
-    for i in range(i0 + 1, i0 + 1 + nc):
-        s = strings[i]
-        m = re.search(r'([\\d.]+)\\s*nm', s)
-        values.append(float(m.group(1)) if m else float(i - i0 - 1))
-        keys.append(s[:cpp])
-    idx = {k: i for i, k in enumerate(keys)}
-    rows = strings[i0 + 1 + nc: i0 + 1 + nc + h]
-    arr = np.array([[values[idx.get(r[c*cpp:(c+1)*cpp], 0)] for c in range(w)] for r in rows])
-    return arr[::-1]
+    """Le a matriz de um .xpm do GROMACS: cada cor tem o valor num comentario /* "0.0385" */."""
+    lines = open(fname).read().splitlines()
+    head = next(i for i, l in enumerate(lines) if re.match(r'^"\\s*\\d+\\s+\\d+\\s+\\d+\\s+\\d+', l))
+    w, h, nc, cpp = map(int, lines[head].strip('",').split())
+    value = {}
+    for l in lines[head + 1: head + 1 + nc]:
+        key = l[1:1 + cpp]
+        m = re.search(r'/\\*\\s*"([^"]*)"\\s*\\*/', l)
+        value[key] = float(m.group(1)) if m else float(len(value))
+    rows = [l.split('"')[1] for l in lines[head + 1 + nc:] if l.startswith('"')][:h]
+    arr = np.array([[value[r[c * cpp:(c + 1) * cpp]] for c in range(w)] for r in rows])
+    return arr[::-1]          # a primeira linha do .xpm e o topo da imagem
 
 def count_particles(gro):
     return int(open(gro).readlines()[1])
@@ -930,7 +925,7 @@ plt.show()
 ''')
 
 md('''
-**O que se observa:** a diagonal escura são resíduos vizinhos na sequência; os blocos escuros longe da diagonal são resíduos distantes na sequência mas próximos no espaço.
+**O que se observa:** a diagonal amarela são resíduos vizinhos na sequência; as manchas claras longe da diagonal são resíduos distantes na sequência mas próximos no espaço.
 
 **Significado:** é a impressão digital do enovelamento. As faixas perpendiculares à diagonal são fitas β pareadas na folha; os blocos entre a hélice (resíduos 23-34) e a folha mostram a hélice apoiada sobre ela.
 ''')

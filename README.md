@@ -149,6 +149,10 @@ No enovelamento, a paisagem tem forma de funil: larga em cima (muitas conformaç
 
 ![Funil de energia](imagens/fund_funil.png)
 
+A mesma ideia em uma dimensão: a coordenada de reação nas quatro resoluções. A curva quântica (QM) é a mais rugosa, porque também resolve os elétrons (polarização, formação e quebra de ligações); cada descida de resolução alisa a paisagem, e o coarse-grained guarda só os dois vales e a barreira principal.
+
+![Paisagem 1D nas quatro resoluções](imagens/fund_paisagem_1d.png)
+
 Numa paisagem lisa, a mesma barreira é cruzada mais vezes no mesmo número de passos: **1 ns de Martini não equivale a 1 ns de all-atom**. Para a água, Marrink *et al.* (2007) estimaram um fator de cerca de 4, mas o fator muda de processo para processo. Comparações entre resoluções usam eventos (formação da bicamada, contatos, estados visitados), não nanossegundos.
 
 ![Relógios diferentes](imagens/fund_relogios.png)
@@ -202,6 +206,28 @@ Aplicando o fator de custo aos 14 min da ubiquitina, os mesmos 15 ns levariam da
 
 O `genion -conc` conta 1 bead W como 1 molécula de água e poria um quarto dos íons; o número de pares vem do volume da caixa. DSSP e ligações de hidrogênio não se aplicam ao modelo CG: a estrutura secundária é parâmetro da topologia.
 
+Gráficos da réplica 1, os mesmos que o notebook desenha a cada etapa:
+
+![Minimização de energia](imagens/martini_minimizacao.png)
+
+A minimização remove contatos ruins da montagem: a energia potencial cai de −38 971 para −51 305 kJ/mol em 6 passos, quando a força máxima fica abaixo de `emtol`.
+
+![Temperatura no NPT](imagens/martini_npt_temperatura.png)
+
+A temperatura oscila em torno de 310 K (310,8 ± 5,5 K na segunda metade): o termostato está mantendo o alvo, e flutuações de alguns kelvin são normais num sistema de 2 304 partículas.
+
+![Densidade no NPT](imagens/martini_npt_densidade.png)
+
+A densidade sobe de 910 para cerca de 1 021 kg/m³ nos primeiros 50 ps e fica estável: a caixa encolheu até a pressão de 1 bar, e a produção começa com o volume certo.
+
+![Raio de giração](imagens/martini_rg.png)
+
+O raio de giração fica entre 1,13 e 1,18 nm em 15 ns: a proteína não incha nem colapsa, o que se espera de uma proteína enovelada com rede elástica.
+
+![Mapa de contatos](imagens/martini_contatos.png)
+
+A diagonal amarela são resíduos vizinhos na sequência. As faixas perpendiculares à diagonal são fitas β antiparalelas pareadas (resíduos 1 a 7 com 10 a 17); a faixa paralela no canto (1 a 7 com 64 a 72) é o pareamento entre a primeira e a última fita da folha.
+
 Nas três réplicas, a rede elástica mantém o enovelamento (RMSD de 0,17 a 0,21 nm) e a região mais móvel é a cauda C-terminal, resíduos 74 a 76, como na simulação atomística.
 
 ![Ubiquitina: início e fim nas três réplicas](imagens/martini_vistas_proteina.png)
@@ -230,7 +256,19 @@ Lipídios distribuídos ao acaso em água se organizam sozinhos em bicamada, gui
 | Espessura $D_{PP}$ | distância entre os picos de PO4 das duas monocamadas, na equilibração |
 | Área por lipídio | área do plano xy na equilibração ÷ lipídios por monocamada |
 
+![Estrutura do agregado de caudas](imagens/martini_percolacao.png)
+
+Na réplica 1, o agregado de caudas forma uma fase contínua já no primeiro nanossegundo e vira bicamada entre 4 e 5 ns; o critério completo (dimensão 2 e $S$ > 0,5) é cumprido em 6,3 ns.
+
 A automontagem usa acoplamento isotrópico porque ainda não há membrana. Com a bicamada formada, o acoplamento isotrópico prende a área à forma cúbica da caixa; na equilibração semi-isotrópica o plano e a normal se ajustam separadamente e a área relaxa (o plano da réplica 1 passou de 7,14 para 6,26 nm).
+
+![Caixa na equilibração semi-isotrópica](imagens/martini_caixa_semiiso.png)
+
+Na equilibração, o lado da caixa no plano da membrana cai de 7,14 para 6,26 nm e a normal cresce de 7,14 para 9,14 nm: a bicamada se compacta lateralmente até a área por lipídio de equilíbrio, que o acoplamento isotrópico não deixava alcançar.
+
+![Perfil de densidade](imagens/martini_perfil_densidade.png)
+
+Ao longo da normal, a água (W) some no centro, as caudas ocupam o núcleo e os picos de PO4 ficam em torno de ±2,1 nm. A distância entre os dois picos é a espessura $D_{PP}$ = 4,28 nm.
 
 Resultado das três réplicas:
 
