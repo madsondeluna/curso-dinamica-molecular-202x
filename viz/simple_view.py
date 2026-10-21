@@ -210,3 +210,28 @@ def stage(part, step, title, structure=None, text=(), legend=(), facts=None, com
     _explain(text=text, facts=facts, compare=compare)
 
 
+
+
+# ---------------------------------------------------------------- compatibilidade
+# Notebooks abertos antes de uma atualizacao baixam este arquivo novo e ainda importam
+# estes nomes. Mantidos para que uma copia antiga do notebook nao quebre na importacao.
+SS = None
+
+
+def card(eyebrow, title, figure_html, text=(), legend=(), facts=None):
+    """Visualizador (HTML do py3Dmol) seguido da explicacao."""
+    display(Markdown(f'#### {title}'))
+    display(HTML(white_box(figure_html)))
+    if legend:
+        _legend(legend)
+    _explain(text=text, facts=facts)
+
+
+def ss_cartoon(view, model, ss):
+    """Cartoon colorido pela string do DSSP (H/G/I helice, E folha) no modelo indicado."""
+    view.setStyle({'model': model}, {'cartoon': {'color': SS_COLORS['c'][1]}})
+    helix = [i + 1 for i, s in enumerate(ss) if s in 'HGI']
+    sheet = [i + 1 for i, s in enumerate(ss) if s == 'E']
+    for key, res in (('h', helix), ('s', sheet)):
+        if res:
+            view.setStyle({'model': model, 'resi': res}, {'cartoon': {'color': SS_COLORS[key][1]}})
