@@ -256,17 +256,22 @@ code('''
 import os, sys
 REPO = 'https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main'
 
-mdp_files = ['minim.mdp', 'ions.mdp', 'npt_prot.mdp', 'md_prot.mdp', 'md_membrane.mdp', 'md_membrane_eq.mdp']
-if not cached(mdp_files, 'arquivos .mdp'):
-    for f in mdp_files:
-        os.system(f'wget -q {REPO}/mdp_martini/{f} -O {f}')
+def refresh(url, dest):
+    """Baixa sempre a versao atual do GitHub; sem rede, mantem a copia que ja existir."""
+    os.makedirs(os.path.dirname(dest) or '.', exist_ok=True)
+    os.system(f'wget -q {url} -O {dest}.new')
+    if os.path.exists(f'{dest}.new') and os.path.getsize(f'{dest}.new') > 0:
+        os.replace(f'{dest}.new', dest)
+    elif os.path.exists(f'{dest}.new'):
+        os.remove(f'{dest}.new')
+    return os.path.exists(dest)
 
+# Parametros e codigo do visualizador acompanham a versao do notebook: baixados a cada execucao
+mdp_files = ['minim.mdp', 'ions.mdp', 'npt_prot.mdp', 'md_prot.mdp', 'md_membrane.mdp', 'md_membrane_eq.mdp']
 viz_files = ['viz/simple_view.py', 'viz/replica_plots.py', 'viz/replica_views.py',
              'viz/pure/__init__.py', 'viz/pure/palette.py', 'viz/pure/mpl.py']
-if not cached(viz_files, 'visualizador'):
-    os.makedirs('viz/pure', exist_ok=True)
-    for f in viz_files:
-        os.system(f'wget -q {REPO}/{f} -O {f}')
+ok = [refresh(f'{REPO}/mdp_martini/{f}', f) for f in mdp_files] + [refresh(f'{REPO}/{f}', f) for f in viz_files]
+print('  arquivos .mdp e visualizador:', 'atualizados' if all(ok) else 'FALTANDO, verifique a conexao')
 
 itp_files = ['martini_v3.0.0.itp', 'martini_v3.0.0_ffbonded_v2.itp',
              'martini_v3.0.0_phospholipids_PC_v2.itp',
