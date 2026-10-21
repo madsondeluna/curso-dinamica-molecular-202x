@@ -650,7 +650,7 @@ def _lipid_handles(names, extra=()):
 
 def fig_raft_domains():
     """Balsa lipidica (fase Lo) cercada de fase Ld, com um receptor dentro da balsa."""
-    fig, ax = plt.subplots(figsize=(12, 4.7))
+    fig, ax = plt.subplots(figsize=(12, 5.1))
     n, raft = 32, (11, 21)
     for i in range(n):
         x = i + 0.5
@@ -677,13 +677,14 @@ def fig_raft_domains():
     ax.text(16.0, -3.3, 'quinase', ha='center', va='center', fontsize=8, color='white', zorder=6)
     _water(ax, 0, n, 2.4, -2.4, h=1.9)
     # chaves de fase
-    for (a, b), lab in (((0.2, 10.8), 'fase Ld: fosfolipídios insaturados, desordenada, mais fina'),
-                        ((11.2, 20.8), 'balsa (fase Lo): SM + colesterol, caudas saturadas, mais espessa'),
-                        ((21.2, 31.8), 'fase Ld')):
+    for (a, b), name, desc in (((0.2, 10.8), 'Fase Ld (desordenada)', 'fosfolipídios insaturados\nbicamada mais fina'),
+                               ((11.2, 20.8), 'Balsa lipídica (fase Lo)', 'SM + colesterol, caudas saturadas\nbicamada mais espessa'),
+                               ((21.2, 31.8), 'Fase Ld (desordenada)', 'fosfolipídios insaturados\nbicamada mais fina')):
         ax.annotate('', xy=(a, 4.55), xytext=(b, 4.55), arrowprops=dict(arrowstyle='|-|', color=INK, lw=0.8,
                                                                           shrinkA=0, shrinkB=0, mutation_scale=3))
-        ax.text((a + b) / 2, 4.8, lab, ha='center', va='bottom', fontsize=8.5, color=INK)
-    ax.set_xlim(0, 35.5); ax.set_ylim(-4.4, 5.6); ax.set_aspect('equal'); frame_off(ax)
+        ax.text((a + b) / 2, 6.25, name, ha='center', va='bottom', fontsize=10, color=INK, weight='bold')
+        ax.text((a + b) / 2, 4.8, desc, ha='center', va='bottom', fontsize=8.5, color=INK, linespacing=1.3)
+    ax.set_xlim(0, 35.5); ax.set_ylim(-4.4, 7.1); ax.set_aspect('equal'); frame_off(ax)
     ax.set_title('Domínios laterais: uma balsa lipídica concentra receptores (esquema)')
     hs, labs = _lipid_handles(['PC', 'PE', 'PS', 'SM', 'CHOL'], [('Proteína', PROT)])
     fig.legend(hs, labs, loc='lower center', ncol=6, frameon=False, fontsize=8.5, bbox_to_anchor=(0.5, 0.0))
