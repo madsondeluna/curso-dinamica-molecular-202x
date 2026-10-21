@@ -24,13 +24,13 @@ Este notebook simula dois sistemas de natureza diferente com o mesmo campo de fo
 | A | Ubiquitina (1UBQ) em água + 0,15 M NaCl | Dinâmica de uma proteína enovelada | 0,5 ns (equilibração) + 15 ns |
 | B | 128 DSPC + 1 536 W | Automontagem espontânea de uma bicamada lipídica | 15 ns |
 
-A Parte A usa a mesma proteína do Exercício 1 do notebook atomístico (`MD_GMX.ipynb`). A Parte B reproduz o tutorial oficial *Lipid bilayers, Part I: Self-assembly* do Martini 3.
+A Parte A usa a mesma proteína do curso atomístico anterior (`legado/MD_GMX.ipynb`). A Parte B reproduz o tutorial oficial *Lipid bilayers, Part I: Self-assembly* do Martini 3.
 
 Cada etapa termina com um **cartão de etapa**: visualização 3D interativa (arraste para girar, role para aproximar), a explicação do que aconteceu, os números do sistema naquele momento e a mesma etapa comparada em três resoluções:
 
 | Resolução | Partícula | Exemplo de campo de força | Usado aqui |
 |-----------|-----------|---------------------------|------------|
-| All-atom (AA) | cada átomo, inclusive todos os H | CHARMM36m (`MD_GMX.ipynb`), AMBER99SB-ILDN | referência |
+| All-atom (AA) | cada átomo, inclusive todos os H | CHARMM36m (`legado/MD_GMX.ipynb`), AMBER99SB-ILDN | referência |
 | United-atom (UA) | átomos pesados; CH, CH₂ e CH₃ viram uma partícula, só os H polares ficam | GROMOS 54A7 | referência |
 | Coarse-grained (CG) | bead de ~4 átomos pesados | Martini 3 | **caso desta aula** |
 ''')
@@ -466,7 +466,7 @@ plt.show()
 md('''
 # Parte A: Ubiquitina em Água (1UBQ)
 
-Mesma proteína do Exercício 1 atomístico: 76 resíduos, carga líquida zero.
+Mesma proteína do curso atomístico (`legado/MD_GMX.ipynb`): 76 resíduos, carga líquida zero.
 ''')
 
 code('''
@@ -677,7 +677,7 @@ stage('A', 5, 'Minimização de energia', structure='em.gro', water=False,
             'A estrutura quase não muda; o que muda é a energia, que cai até um platô.'],
       legend=['BB', 'SC', 'NA', 'CL'],
       facts={'passos': len(d), 'energia final (kJ/mol)': num(d[-1, 1]), 'força máxima (kJ/mol/nm)': num(fmax), 'critério': '1000'},
-      compare={'aa': ('emtol = 500', '', 'No Exercício 1 o critério é 500 kJ/mol/nm, com ~30 mil átomos.'),
+      compare={'aa': ('emtol = 500', '', 'No curso atomístico o critério é 500 kJ/mol/nm, com ~30 mil átomos.'),
                'ua': ('emtol = 500 a 1000', '', 'Mesmo algoritmo, sistema do tamanho do all-atom por causa da água.'),
                'cg': ('emtol = 1000', f'{len(d)} passos', 'Menos partículas e forças mais suaves: segundos de CPU.')})
 ''')
@@ -716,7 +716,7 @@ stage('A', 6, 'Equilibração NPT', structure='npt.gro',
       legend=['BB', 'SC', 'W', 'NA', 'CL'],
       facts={'temperatura média (K)': num(d[:, 1].mean(), 1), 'densidade (kg/m³)': num(d[len(d)//2:, 2].mean()),
              'aresta da caixa (nm)': num(box_edge('npt.gro'), 2), 'ns/dia': num(performance('npt.log') or 0)},
-      compare={'aa': ('dt = 2 fs', '', 'NVT e depois NPT no Exercício 1. Ligações com H restritas pelo LINCS para permitir 2 fs.'),
+      compare={'aa': ('dt = 2 fs', '', 'NVT e depois NPT no curso atomístico. Ligações com H restritas pelo LINCS para permitir 2 fs.'),
                'ua': ('dt = 2 fs', '', 'Também restringe ligações com H; menos H do que no all-atom.'),
                'cg': ('dt = 10 fs aqui, 20 fs na produção', '', 'Sem hidrogênios, nenhuma vibração rápida limita o passo.')})
 ''')
@@ -758,7 +758,7 @@ stage('A', 7, 'Simulação produtiva', structure='md_prot_anim.pdb', frames=True
             'As flutuações são pequenas: a rede elástica mantém o enovelamento. As regiões que se movem mais são as que têm menos molas.'],
       legend=['BB', 'SC'],
       facts={'tempo simulado (ns)': num(T_PROT), 'passo (fs)': 20, 'passos': num(NSTEPS_PROT), 'ns/dia': num(PERF_CG or 0)},
-      compare={'aa': ('100 ps no Exercício 1', '', 'O exercício atomístico simula 100 ps em 50 000 passos de 2 fs.'),
+      compare={'aa': ('100 ps no curso atomístico', '', 'O curso atomístico simula 100 ps em 50 000 passos de 2 fs.'),
                'ua': ('dt = 2 fs', '', 'Custo por passo próximo do all-atom em sistemas solvatados: a água é a mesma.'),
                'cg': (f'{num(T_PROT)} ns em {num(NSTEPS_PROT)} passos', f'{num(PERF_CG or 0)} ns/dia', 'Compare com as estimativas teóricas mais abaixo.')})
 ''')
@@ -766,7 +766,7 @@ stage('A', 7, 'Simulação produtiva', structure='md_prot_anim.pdb', frames=True
 md('''
 ## Análise A: RMSD, RMSF, raio de giração e mapa de contatos
 
-As mesmas análises do notebook atomístico, calculadas sobre os beads BB (o equivalente CG do Cα). DSSP e ligações de hidrogênio não se aplicam: não há átomos de backbone nem hidrogênios, e a estrutura secundária está fixada na topologia.
+As mesmas análises do curso atomístico, calculadas sobre os beads BB (o equivalente CG do Cα). DSSP e ligações de hidrogênio não se aplicam: não há átomos de backbone nem hidrogênios, e a estrutura secundária está fixada na topologia.
 
 **Na aula:** com a rede elástica, a proteína fica num poço único em torno da estrutura inicial (painel da direita).
 

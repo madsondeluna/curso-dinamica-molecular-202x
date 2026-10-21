@@ -1,10 +1,9 @@
 # Dinâmica Molecular: do átomo ao bead
 
-Material de aula com dois notebooks executáveis no Google Colab: uma proteína em resolução atomística e a mesma proteína, mais uma membrana que se monta sozinha, em resolução coarse-grained (Martini 3).
+Material de aula executável no Google Colab: uma proteína e uma membrana que se monta sozinha, em resolução coarse-grained (Martini 3), comparadas o tempo todo com as resoluções all-atom, united-atom e quântica.
 
 | Notebook | Resolução | Sistemas | Colab |
 |----------|-----------|----------|-------|
-| `MD_GMX.ipynb` | all-atom, CHARMM36m | ubiquitina (1UBQ) em água | <a href="https://colab.research.google.com/drive/1mNCWToj7F1zcLeahWdKIuU3ttugzDtsq?usp=sharing" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
 | `MD_Martini.ipynb` | coarse-grained, Martini 3 | ubiquitina (1UBQ) em água; automontagem de bicamada de DSPC | <a href="https://colab.research.google.com/github/madsondeluna/aula_dinamica_molecular/blob/main/MD_Martini.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
 
 
@@ -19,7 +18,7 @@ Material de aula com dois notebooks executáveis no Google Colab: uma proteína 
 - [5. Parte A: ubiquitina em Martini 3](#5-parte-a-ubiquitina-em-martini-3)
 - [6. Parte B: automontagem de uma bicamada](#6-parte-b-automontagem-de-uma-bicamada)
 - [7. Réplicas e sementes](#7-réplicas-e-sementes)
-- [8. Notebook all-atom (CHARMM36m)](#8-notebook-all-atom-charmm36m)
+- [Material legado: curso atomístico](#material-legado-curso-atomístico)
 - [Referência técnica](#referência-técnica)
 - [Referências](#referências)
 
@@ -35,7 +34,6 @@ Material de aula com dois notebooks executáveis no Google Colab: uma proteína 
 | 5 | Prática: ubiquitina coarse-grained, do PDB à análise | `MD_Martini.ipynb`, Parte A |
 | 6 | Prática: lipídios aleatórios formando uma bicamada | `MD_Martini.ipynb`, Parte B |
 | 7 | Três réplicas: o que se repete e o que é acaso | seção 7; seção de réplicas do notebook |
-| 8 | Comparação com a simulação atomística | `MD_GMX.ipynb` |
 
 
 ## Como usar no Google Colab
@@ -55,7 +53,6 @@ Parâmetros na segunda célula de `MD_Martini.ipynb`:
 |----------|------|-------------------------|
 | `MD_Martini.ipynb` | `USE_PRECOMPUTED = True` | 5 a 10 min (instalação, download e análises) |
 | `MD_Martini.ipynb` | `USE_PRECOMPUTED = False` | 1,5 a 2,5 h (Parte A: 15 ns; Parte B: 15 + 5 ns) |
-| `MD_GMX.ipynb` | simulação completa | depende da CPU do Colab (170 ps de dinâmica all-atom) |
 
 Ao reabrir com o Drive montado, cada etapa concluída é reaproveitada e uma simulação interrompida continua do último checkpoint. Uma etapa de MD só conta como concluída quando o `.gro` final existe.
 
@@ -178,7 +175,7 @@ Aplicando o fator de custo aos 14 min da ubiquitina, os mesmos 15 ns levariam da
 
 ## 5. Parte A: ubiquitina em Martini 3
 
-Mesma proteína do notebook atomístico: 76 resíduos, carga líquida zero. Cada etapa do notebook termina com um cartão de etapa: visualização 3D interativa, explicação, números do sistema e a mesma etapa nas três resoluções.
+Mesma proteína do curso atomístico (material legado): 76 resíduos, carga líquida zero. Cada etapa do notebook termina com um cartão de etapa: visualização 3D interativa, explicação, números do sistema e a mesma etapa nas três resoluções.
 
 | Etapa | Comando ou arquivo | Valor |
 |-------|--------------------|-------|
@@ -276,9 +273,17 @@ Na proteína, as três curvas seguem a mesma tendência. Na membrana, duas répl
 Uso em aula: cada grupo escolhe uma `REPLICA`, com `USE_PRECOMPUTED = True` para ver os resultados na hora ou `False` para simular a própria réplica.
 
 
-## 8. Notebook all-atom (CHARMM36m)
+## Material legado: curso atomístico
 
-`MD_GMX.ipynb` segue o Exercício 1 de Lemkul (2024). O campo de força CHARMM36m (julho 2022) é baixado pelo notebook.
+Versão anterior do curso, em resolução all-atom, mantida em `legado/`.
+
+| Arquivo | Conteúdo | Colab |
+|---------|----------|-------|
+| `legado/MD_GMX.ipynb` | ubiquitina (1UBQ) em água, CHARMM36m; Exercício 1 de Lemkul (2024) | <a href="https://colab.research.google.com/github/madsondeluna/aula_dinamica_molecular/blob/main/legado/MD_GMX.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
+| `legado/mdp/` | `ions.mdp`, `minim.mdp`, `nvt.mdp`, `npt.mdp`, `md.mdp` (CHARMM36m) | |
+| `legado/lemkul-2024-...pdf` | artigo de referência | |
+
+O campo de força CHARMM36m (julho 2022) é baixado pelo notebook. Cópias do notebook salvas antes da mudança para `legado/` buscam os `.mdp` no caminho antigo; abra a versão pelo botão acima.
 
 | Etapa | Comando principal | Valor no notebook | Valor no artigo |
 |-------|-------------------|-------------------|-----------------|
@@ -292,7 +297,7 @@ Uso em aula: cada grupo escolhe uma `REPLICA`, com `USE_PRECOMPUTED = True` para
 | Produção | `md.mdp` | 100 ps | 50 + 50 ns |
 | Análises | `gmx rms`, `rmsf`, `gyrate`, `mdmat`, `hbond`; DSSP via MDTraj | RMSD, RMSF, Rg, contatos, ligações H, DSSP | RMSD, RMSF, ligações H, DSSP |
 
-Parâmetros obrigatórios do CHARMM36m, presentes em todos os arquivos de `mdp/`:
+Parâmetros obrigatórios do CHARMM36m, presentes em todos os arquivos de `legado/mdp/`:
 
 ```
 vdw-modifier    = force-switch
@@ -311,9 +316,8 @@ constraints     = h-bonds
 
 | Caminho | Conteúdo |
 |---------|----------|
-| `MD_GMX.ipynb` | notebook all-atom |
 | `MD_Martini.ipynb` | notebook coarse-grained (gerado por `tools/build_martini_notebook.py`) |
-| `mdp/` | parâmetros CHARMM36m |
+| `legado/` | curso atomístico anterior: `MD_GMX.ipynb`, `mdp/`, artigo de Lemkul (2024) |
 | `mdp_martini/` | `minim.mdp`, `ions.mdp`, `npt_prot.mdp`, `md_prot.mdp`, `md_membrane.mdp`, `md_membrane_eq.mdp` |
 | `viz/stage_viewer.py`, `viz/stage.css`, `viz/pure/` | cartões de etapa e tema dos gráficos |
 | `viz/replica_plots.py` | gráficos de réplicas e de média ± DP |
