@@ -7,6 +7,8 @@ def md(s):
     cells.append({"cell_type": "markdown", "metadata": {}, "source": s.strip("\n")})
 
 def code(s):
+    if not s.strip():
+        return
     cells.append({"cell_type": "code", "metadata": {}, "execution_count": None,
                   "outputs": [], "source": s.strip("\n")})
 
@@ -251,7 +253,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pure import palette
 from replica_plots import use_paper_style, finish, COLORS
-from simple_view import stage, card, style_beads, CHART, INK, BEADS
+import simple_view
+from simple_view import stage, card, style_beads, CHART, INK, BEADS, SS_COLORS, ss_cartoon
 use_paper_style()                       # mesmo estilo das figuras do README
 C1 = COLORS['protein']                  # proteina: laranja
 CM = COLORS['membrane']                 # membrana: azul
@@ -490,12 +493,15 @@ N_HEAVY = sum(1 for l in open('1UBQ_protein.pdb') if l.startswith('ATOM'))
 
 def stick_style(view):
     view.setStyle({}, {'stick': {'color': INK, 'radius': 0.15}})
+    # cartoon pela estrutura secundaria que o 3Dmol calcula das ligacoes de hidrogenio do backbone
+    view.addStyle({}, {'cartoon': {'colorscheme': {'prop': 'ss', 'map': {k: c for k, (_, c) in SS_COLORS.items()}},
+                                   'opacity': 0.9}})
 
 stage('A', 1, 'Estrutura cristalográfica', structure='1UBQ_protein.pdb', style=stick_style, box=False,
       text=['A estrutura 1UBQ vem de cristalografia de raios X. A difração não resolve hidrogênios, '
             'então o arquivo traz apenas os átomos pesados (C, N, O, S). As águas cristalográficas já foram removidas.',
             'É o mesmo ponto de partida nas três resoluções: o que muda é o que fazemos com estes átomos no passo seguinte.'],
-      legend=[('Átomo pesado', 'ink')],
+      legend=[('Átomo pesado', 'ink'), 'SS'],
       facts={'resíduos': N_RES, 'átomos pesados': N_HEAVY, 'hidrogênios': 0, 'carga líquida': 0},
       compare={'aa': ('todos os H', '', 'O pdb2gmx adicionaria todos os hidrogênios: a proteína passa a ter cerca do dobro de partículas.'),
                'ua': ('H polares e aromáticos', '', 'Só os hidrogênios polares (N-H, O-H) e aromáticos ficam explícitos; os demais se fundem ao carbono.'),
@@ -553,18 +559,20 @@ SS = next((l[2:].strip() for l in open('molecule_0.itp')
 N_CG = sum(1 for l in open('ubq_cg.pdb') if l.startswith('ATOM'))
 N_RB = sum(1 for l in open('molecule_0.itp') if 'RUBBER_FC' in l and not l.startswith(('#', ';')))
 print('Estrutura secundaria (DSSP):', SS)
+simple_view.SS = SS if SS != '?' else None   # cartoon nos visualizadores da proteina
 print(f'All-atom (teorico): {N_AA} | united-atom (teorico): {N_UA} | Martini 3: {N_CG} | molas da rede elastica: {N_RB}')
 ''')
 
 code('''
 # Cartao 1: mapeamento atomistico -> CG, estruturas sobrepostas
 def mapping_style(view):
-    view.setStyle({'model': 0}, {'stick': {'color': INK, 'radius': 0.12}})
+    ss_cartoon(view, 0, SS)
+    view.addStyle({'model': 0}, {'stick': {'color': INK, 'radius': 0.1}})
     view.setStyle({'model': 1, 'atom': 'BB'}, {'sphere': {'color': BEADS['BB'][1], 'radius': 1.4, 'opacity': 0.85}})
     view.setStyle({'model': 1, 'not': {'atom': 'BB'}}, {'sphere': {'color': BEADS['SC'][1], 'radius': 1.2, 'opacity': 0.85}})
 
 import py3Dmol
-v = py3Dmol.view(width='100%', height=440)
+v = py3Dmol.view(width=820, height=440)
 v.addModel(open('1UBQ_protein.pdb').read(), 'pdb')
 v.addModel(open('ubq_cg.pdb').read(), 'pdb')
 mapping_style(v)
@@ -576,7 +584,7 @@ stage('A', 2, 'Mapeamento atomístico para beads', figure_html=v._make_html(),
             'O backbone de cada resíduo vira um bead BB; a cadeia lateral vira de zero (glicina) a cinco beads (triptofano).',
             f'A estrutura secundária calculada pelo DSSP fica gravada na topologia, e {N_RB} molas ligam beads BB '
             'próximos para manter a forma da proteína.'],
-      legend=['BB', 'SC', ('Átomo pesado', 'ink')],
+      legend=['BB', 'SC', 'SS', ('Átomo pesado', 'ink')],
       facts={'átomos pesados': N_HEAVY, 'beads': N_CG, 'átomos por bead': num(N_HEAVY / N_CG, 1), 'molas elásticas': N_RB},
       compare={'aa': ('todos os H explícitos', f'{num(N_AA)} átomos', 'Resolve cada ligação de hidrogênio e a geometria de cada grupo. Contagem a pH 7.'),
                'ua': ('H polares e aromáticos', f'{num(N_UA)} partículas', 'CH, CH₂ e CH₃ alifáticos viram uma partícula cada (convenção GROMOS 54A7).'),
@@ -621,7 +629,7 @@ N_SOLV = count_particles('ubq_solv.gro')
 stage('A', 3, 'Solvatação', structure='ubq_solv.gro',
       text=['O <code>gmx solvate</code> preenche a caixa com cópias de <code>water.gro</code>, uma caixa de água W já equilibrada.',
             f'Cada bead W representa quatro moléculas de água: os {num(N_W)} beads equivalem a {num(4 * N_W)} moléculas de H₂O.'],
-      legend=['BB', 'SC', 'W'],
+      legend=['BB', 'SC', 'SS', 'W'],
       facts={'beads de proteína': N_CG, 'beads W': num(N_W), 'aresta da caixa (nm)': num(L, 2), 'partículas no total': num(N_SOLV)},
       compare={'aa': ('TIP3P, 3 sítios', f'≈ {num(N_AA + 12 * N_W)} átomos', 'A mesma água em all-atom: 3 átomos por molécula. A água passa a ser mais de 95% do sistema.'),
                'ua': ('SPC, 3 sítios', f'≈ {num(N_UA + 12 * N_W)} partículas', 'A água continua com 3 sítios. O united-atom só economiza na proteína, e a água domina o custo.'),
@@ -649,7 +657,7 @@ stage('A', 4, 'Íons', structure='ubq_ions.gro',
       text=[f'O <code>genion</code> troca {2 * N_PAIRS} beads W por íons. A água aparece translúcida para os íons ficarem visíveis.',
             'Com <code>-conc 0.15</code>, o genion contaria 1 bead W como 1 molécula e poria um quarto dos íons. '
             'O número de pares vem do volume da caixa.'],
-      legend=['BB', 'SC', 'NA', 'CL'],
+      legend=['BB', 'SC', 'SS', 'NA', 'CL'],
       facts={'volume (nm³)': num(V, 1), 'pares NaCl': N_PAIRS, 'concentração (M)': '0,15', 'carga líquida': 0},
       compare={'aa': ('Na⁺ e Cl⁻ de 1 átomo', '', 'O genion -conc funciona direto: cada água é uma molécula. A camada de hidratação é feita de águas explícitas.'),
                'ua': ('Na⁺ e Cl⁻ de 1 átomo', '', 'Igual ao all-atom: íons e águas explícitos.'),
@@ -689,7 +697,7 @@ stage('A', 5, 'Minimização de energia', structure='em.gro',
       text=['O steepest descent move cada partícula na direção da força até remover sobreposições entre beads. '
             'Não é dinâmica: não há tempo nem temperatura.',
             'A estrutura quase não muda; o que muda é a energia, que cai até um platô.'],
-      legend=['BB', 'SC', 'NA', 'CL'],
+      legend=['BB', 'SC', 'SS', 'NA', 'CL'],
       facts={'passos': len(d), 'energia final (kJ/mol)': num(d[-1, 1]), 'força máxima (kJ/mol/nm)': num(fmax), 'critério': '1000'},
       compare={'aa': ('emtol = 500', '', 'No curso atomístico o critério é 500 kJ/mol/nm, com ~30 mil átomos.'),
                'ua': ('emtol = 500 a 1000', '', 'Mesmo algoritmo, sistema do tamanho do all-atom por causa da água.'),
@@ -742,10 +750,6 @@ md('''
 **Significado:** a caixa se ajustou à pressão de 1 bar. Sem essa etapa, a água ficaria comprimida ou rarefeita, e as interações da proteína com o solvente estariam erradas.
 ''')
 
-code('''
-
-''')
-
 md('''
 Temperatura e densidade estabilizaram. Abaixo, o sistema ao fim da equilibração, com a água translúcida.
 ''')
@@ -755,7 +759,7 @@ stage('A', 6, 'Equilibração NPT', structure='npt.gro',
       text=['Temperatura e pressão chegam aos valores alvo enquanto o backbone fica preso. '
             'A caixa encolhe ou cresce um pouco até a densidade estabilizar.',
             'A densidade de água W Martini fica perto de 1000 kg/m³, como a água real.'],
-      legend=['BB', 'SC', 'W', 'NA', 'CL'],
+      legend=['BB', 'SC', 'SS', 'W', 'NA', 'CL'],
       facts={'temperatura média (K)': num(d[:, 1].mean(), 1), 'densidade (kg/m³)': num(d[len(d)//2:, 2].mean()),
              'aresta da caixa (nm)': num(box_edge('npt.gro'), 2), 'ns/dia': num(performance('npt.log') or 0)},
       compare={'aa': ('dt = 2 fs', '', 'NVT e depois NPT no curso atomístico. Ligações com H restritas pelo LINCS para permitir 2 fs.'),
@@ -880,10 +884,6 @@ md('''
 **Significado:** é a impressão digital do enovelamento. As faixas perpendiculares à diagonal são fitas β pareadas na folha; os blocos entre a hélice (resíduos 23-34) e a folha mostram a hélice apoiada sobre ela.
 ''')
 
-code('''
-
-''')
-
 md('''
 Os gráficos resumem os 15 ns. Abaixo, a estrutura no último quadro e os números principais.
 ''')
@@ -893,7 +893,7 @@ top_res = rmsf[np.argsort(rmsf[:, 1])[-4:][::-1], 0].astype(int)
 stage('A', 8, 'Análise', structure='md_prot.gro',
       text=['A rede elástica mantém o RMSD baixo e estável: ele não mede enovelamento, porque as molas impedem o desenovelamento.',
             'O RMSF continua informativo. A cauda C-terminal tem poucas molas e é a região mais móvel, como na simulação atomística.'],
-      legend=['BB', 'SC', 'NA', 'CL'],
+      legend=['BB', 'SC', 'SS', 'NA', 'CL'],
       facts={'RMSD médio (nm)': num(rmsd[len(rmsd)//2:, 1].mean(), 3), 'Rg médio (nm)': num(rg[:, 1].mean(), 3),
              'resíduos mais móveis': ', '.join(map(str, top_res)), 'RMSF máximo (nm)': num(rmsf[:, 1].max(), 2)},
       compare={'aa': ('todas as análises', '', 'RMSD, RMSF, Rg, contatos, DSSP ao longo do tempo e ligações de hidrogênio.'),

@@ -104,6 +104,18 @@ def center_along(xyz, box, sel, axis):
     return out
 
 
+def center_protein(xyz, box, prot):
+    """Proteina inteira no centro da caixa; agua e ions reembrulhados dentro dela."""
+    out = xyz.copy()
+    for k in range(1, len(prot)):            # desembrulha bead a bead ao longo da cadeia
+        d = out[prot[k]] - out[prot[k - 1]]
+        out[prot[k]] = out[prot[k - 1]] + d - box * np.round(d / box)
+    out += box / 2 - out[prot].mean(axis=0)
+    rest = np.setdiff1d(np.arange(len(out)), prot)
+    out[rest] -= box * np.floor(out[rest] / box)
+    return out
+
+
 def side_view(xyz, normal_axis):
     """Rotacao propria que leva a normal da bicamada para o eixo y (vertical na tela)."""
     if normal_axis == 1:
@@ -166,7 +178,8 @@ def export_protein_movie(rep_dir, n_frames=31, name='viz_prot_movie'):
         t = md.load(str(d / 'md_prot_pbc.xtc'), top=str(d / 'ubq_ions.gro'))
         top = t.topology
         idx = np.linspace(0, t.n_frames - 1, n_frames).astype(int)
-        frames = [t.xyz[i] for i in idx]
+        prot = top.select('not resname W and not name NA CL')
+        frames = [center_protein(t.xyz[i], t.unitcell_lengths[i], prot) for i in idx]
         write_pdb(d / f'{name}.pdb', top, frames, itp_bonds(d / 'molecule_0.itp'), keep=top.select('not resname W'))
         write_xyz(d / f'{name}_water.xyz', frames, top.select('resname W'))
     return d / f'{name}.pdb', d / f'{name}_water.xyz'
@@ -208,8 +221,8 @@ def export_replica(rep_dir, n_frames_prot=16, n_frames_mem=16):
         t = md.load(str(d / 'md_prot_pbc.xtc'), top=str(d / 'ubq_ions.gro'))
         top = t.topology
         idx = np.linspace(0, t.n_frames - 1, n_frames_prot).astype(int)
-        frames = [t.xyz[i] for i in idx]
-        nprot = sum(1 for a in top.atoms if a.residue.is_protein)
+        prot = top.select('not resname W and not name NA CL')
+        frames = [center_protein(t.xyz[i], t.unitcell_lengths[i], prot) for i in idx]
         write_pdb(d / 'viz_prot.pdb', top, frames, list(prot_bonds), keep=top.select('not resname W'))
         write_xyz(d / 'viz_prot_water.xyz', frames, top.select('resname W'))
     out['prot'] = d / 'viz_prot.pdb'
