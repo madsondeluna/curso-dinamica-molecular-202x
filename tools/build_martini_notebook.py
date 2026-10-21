@@ -11,7 +11,7 @@ def code(s):
                   "outputs": [], "source": s.strip("\n")})
 
 md('''
-<a href="https://colab.research.google.com/github/madsondeluna/aula_dinamica_molecular/blob/main/MD_Martini.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+<a href="https://colab.research.google.com/github/madsondeluna/curso-dinamica-molecular-202x/blob/main/MD_Martini.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 ''')
 
 md('''
@@ -212,7 +212,7 @@ md('''
 
 code('''
 import os, sys
-REPO = 'https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main'
+REPO = 'https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main'
 
 mdp_files = ['minim.mdp', 'ions.mdp', 'npt_prot.mdp', 'md_prot.mdp', 'md_membrane.mdp', 'md_membrane_eq.mdp']
 if not cached(mdp_files, 'arquivos .mdp'):
@@ -307,7 +307,7 @@ md('''
 
 A MD resolve as equações de Newton para todas as partículas, passo a passo. A cada passo $\\Delta t$, o programa calcula as forças a partir da energia potencial, atualiza as velocidades e depois as posições. O GROMACS usa o integrador leap-frog, que calcula velocidades na metade do passo.
 
-![Ciclo da MD](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_ciclo_md.png)
+![Ciclo da MD](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_ciclo_md.png)
 ''')
 
 md('''
@@ -317,7 +317,7 @@ A energia potencial é a soma de termos simples. Os **ligados** mantêm a geomet
 
 $$U = \\sum_{lig} \\tfrac{1}{2}k_b(r-r_0)^2 + \\sum_{ang} \\tfrac{1}{2}k_\\theta(\\theta-\\theta_0)^2 + \\sum_{died} k_\\phi[1+\\cos(n\\phi-\\delta)] + \\sum_{i \\lt j} 4\\varepsilon_{ij}\\left[\\left(\\tfrac{\\sigma_{ij}}{r_{ij}}\\right)^{12}-\\left(\\tfrac{\\sigma_{ij}}{r_{ij}}\\right)^{6}\\right] + \\sum_{i \\lt j} \\frac{q_iq_j}{4\\pi\\varepsilon_0\\varepsilon_r r_{ij}}$$
 
-![Termos do campo de força](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_campo_de_forca.png)
+![Termos do campo de força](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_campo_de_forca.png)
 ''')
 
 md('''
@@ -325,7 +325,7 @@ md('''
 
 O passo de tempo é limitado pelo movimento mais rápido do sistema. Em all-atom, é o estiramento de ligações com hidrogênio (período de ~11 fs); com essas ligações restritas (`constraints = h-bonds`), 2 fs é estável. No Martini não há hidrogênios e as ligações entre beads vibram devagar: 20 fs funcionam.
 
-![Passo de tempo](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_passo_de_tempo.png)
+![Passo de tempo](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_passo_de_tempo.png)
 ''')
 
 md('''
@@ -333,7 +333,7 @@ md('''
 
 A caixa simulada se repete infinitamente em todas as direções, o que elimina superfícies artificiais. Cada partícula só interage com as vizinhas dentro de uma distância de corte $r_c$, que pode incluir cópias de partículas da caixa ao lado. Por isso a caixa precisa ser maior que $2r_c$ e a molécula não pode "ver" a própria imagem.
 
-![PBC e cutoff](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_pbc_cutoff.png)
+![PBC e cutoff](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_pbc_cutoff.png)
 ''')
 
 md('''
@@ -348,11 +348,11 @@ md('''
 
 Só a QM descreve reações químicas (quebra e formação de ligações). As outras três usam ligações fixas e mudam apenas quantos detalhes guardam.
 
-![Fenilalanina em quatro resoluções](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_resolucoes_molecula.png)
+![Fenilalanina em quatro resoluções](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_resolucoes_molecula.png)
 
 O mapeamento Martini 3 depende do resíduo: glicina tem só o bead de backbone, aminoácidos aromáticos têm três ou quatro beads de cadeia lateral.
 
-![Mapeamento de resíduos](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_mapeamento_residuos.png)
+![Mapeamento de resíduos](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_mapeamento_residuos.png)
 ''')
 
 md('''
@@ -360,7 +360,7 @@ md('''
 
 Quatro moléculas de água viram um bead W. O bead é maior (σ = 0,47 nm contra 0,315 nm do oxigênio do TIP3P) e o poço de Lennard-Jones é mais fundo, porque precisa representar a atração média de quatro moléculas.
 
-![Mapeamento 4:1 e Lennard-Jones](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_mapeamento_lj.png)
+![Mapeamento 4:1 e Lennard-Jones](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_mapeamento_lj.png)
 ''')
 
 md('''
@@ -368,11 +368,11 @@ md('''
 
 Cada resolução cobre uma faixa de tamanhos e tempos. As faixas abaixo são ordens de grandeza típicas, não limites rígidos. Processos de interesse biológico, como enovelamento e fusão de membranas, ficam no limite ou além do all-atom e dentro do coarse-grained.
 
-![Escalas](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_escalas.png)
+![Escalas](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_escalas.png)
 
 O custo por nanossegundo é o produto de três fatores: partículas, vizinhos dentro do cutoff e passos por ns. A figura usa o sistema da Parte A; os valores de all-atom e united-atom são contagens teóricas.
 
-![Custo teórico](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_custo_teorico.png)
+![Custo teórico](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_custo_teorico.png)
 ''')
 
 md('''
@@ -380,15 +380,15 @@ md('''
 
 A simulação caminha sobre uma paisagem de energia livre: passa a maior parte do tempo nos vales e cruza as barreiras raramente. Ao agrupar átomos em beads, o CG remove a rugosidade (barreiras pequenas de rotâmeros, ligações de hidrogênio, rearranjo de águas) e mantém os vales principais.
 
-![Paisagem 2D](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_paisagem_2d.png)
+![Paisagem 2D](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_paisagem_2d.png)
 
 No enovelamento, a paisagem tem forma de funil: larga em cima (muitas conformações desenoveladas) e estreita no fundo (o estado nativo). A rede elástica do Martini troca o funil por um poço único: a proteína fica perto da estrutura inicial e não enovela nem desenovela.
 
-![Funil de energia](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_funil.png)
+![Funil de energia](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_funil.png)
 
 Minimizar e simular são coisas diferentes: a minimização só desce até o mínimo mais próximo; a dinâmica a temperatura finita explora a paisagem.
 
-![Minimização e dinâmica](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_minimizacao_vs_md.png)
+![Minimização e dinâmica](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_minimizacao_vs_md.png)
 ''')
 
 md('''
@@ -396,7 +396,7 @@ md('''
 
 Numa paisagem lisa, a mesma barreira é cruzada mais vezes no mesmo número de passos. Isso significa que **1 ns de Martini não equivale a 1 ns de all-atom**: o relógio da simulação CG anda mais rápido que o relógio físico. Para a água, Marrink *et al.* (2007) estimaram um fator de cerca de 4, mas o fator muda de processo para processo. Por isso, compare resoluções diferentes por eventos (formação da bicamada, contatos, estados visitados) e não por nanossegundos.
 
-![Relógios diferentes](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_relogios.png)
+![Relógios diferentes](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_relogios.png)
 ''')
 
 md('''
@@ -519,9 +519,9 @@ As comparações com all-atom e united-atom são **teóricas**: o número de par
 
 **Na aula:** como cada resíduo vira beads, e a mesma fenilalanina em quatro resoluções.
 
-![Mapeamento de resíduos](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_mapeamento_residuos.png)
+![Mapeamento de resíduos](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_mapeamento_residuos.png)
 
-![Quatro resoluções](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_resolucoes_molecula.png)
+![Quatro resoluções](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_resolucoes_molecula.png)
 ''')
 
 code('''
@@ -588,9 +588,9 @@ O `topol.top` inclui primeiro a matriz de interações do Martini 3, depois a pr
 
 **Na aula:** a caixa periódica e por que um bead W não é um átomo grande.
 
-![PBC e cutoff](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_pbc_cutoff.png)
+![PBC e cutoff](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_pbc_cutoff.png)
 
-![Mapeamento 4:1 e Lennard-Jones](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_mapeamento_lj.png)
+![Mapeamento 4:1 e Lennard-Jones](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_mapeamento_lj.png)
 ''')
 
 code('''
@@ -659,7 +659,7 @@ md('''
 
 Steepest descent até a força máxima ficar abaixo de 1000 kJ/mol/nm. A rede elástica e as cadeias laterais com geometria fixa impedem forças muito menores; o critério de 500 kJ/mol/nm do exercício atomístico não converge aqui.
 
-![Minimização e dinâmica](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_minimizacao_vs_md.png)
+![Minimização e dinâmica](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_minimizacao_vs_md.png)
 ''')
 
 code('''
@@ -770,7 +770,7 @@ Restrições removidas, passo de 20 fs: 750 000 passos.
 
 **Na aula:** por que o Martini usa 20 fs e o all-atom 2 fs.
 
-![Passo de tempo](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_passo_de_tempo.png)
+![Passo de tempo](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_passo_de_tempo.png)
 ''')
 
 code('''
@@ -813,7 +813,7 @@ As mesmas análises do curso atomístico, calculadas sobre os beads BB (o equiva
 
 **Na aula:** com a rede elástica, a proteína fica num poço único em torno da estrutura inicial (painel da direita).
 
-![Funil de energia](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_funil.png)
+![Funil de energia](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_funil.png)
 ''')
 
 code('''
@@ -986,7 +986,7 @@ Na Parte A a estrutura estava dada e a topologia a mantinha. Aqui nada é impost
 
 Réplica 1 desta aula, em projeção lateral (cabeças polares em azul, caudas em cinza):
 
-![Automontagem em quadros](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_automontagem_quadros.png)
+![Automontagem em quadros](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_automontagem_quadros.png)
 ''')
 
 code('''
@@ -1067,7 +1067,7 @@ O acoplamento de pressão é **isotrópico**: ainda não há bicamada, logo não
 
 **Na aula:** o relógio do Martini anda mais rápido que o físico, porque a paisagem é mais lisa.
 
-![Relógios diferentes](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_relogios.png)
+![Relógios diferentes](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_relogios.png)
 ''')
 
 code('''
@@ -1104,7 +1104,7 @@ $$Q = \\left\\langle \\tfrac{3}{2}\\,\\hat{u}\\hat{u}^T - \\tfrac{1}{2} I \\righ
 
 e $S$ é o seu maior autovalor. Com orientações aleatórias, $S$ fica perto de 0,2 (e não de 0: o maior autovalor de uma amostra finita de 128 vetores é sempre positivo); com todos os lipídios alinhados, $S \\to 1$. O autovetor correspondente é a normal da bicamada, encontrada sem supor em qual eixo ela se formou.
 
-![Paisagem 2D](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_paisagem_2d.png)
+![Paisagem 2D](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_paisagem_2d.png)
 ''')
 
 code('''
@@ -1608,11 +1608,11 @@ md('''
 
 **Membrana.** Primeira coluna: o início, com os lipídios espalhados pela caixa. Segunda: o fim visto de lado. Terceira: o fim visto de cima. As réplicas 1 e 2 mostram duas camadas de cabeças (azul e vermelho) separadas pelo núcleo de caudas (cinza); a réplica 3 terminou numa estrutura conectada.
 
-![Membrana: início e fim nas três réplicas](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/martini_vistas_membrana.png)
+![Membrana: início e fim nas três réplicas](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/martini_vistas_membrana.png)
 
 **Proteína.** As três réplicas partem da mesma estrutura e terminam com a mesma forma geral; o que muda é a posição da cauda C-terminal, a parte flexível. Primeira coluna: o início; segunda: o fim visto de frente; terceira: o fim girado 90°.
 
-![Ubiquitina: início e fim nas três réplicas](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/martini_vistas_proteina.png)
+![Ubiquitina: início e fim nas três réplicas](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/martini_vistas_proteina.png)
 ''')
 
 md('''
@@ -1620,7 +1620,7 @@ md('''
 
 A bicamada desta aula tem um único lipídio. Membranas de verdade misturam dezenas, e a composição de cada lado é diferente. Essa diferença decide como moléculas e fármacos interagem com cada tipo de célula.
 
-![Composição das membranas](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_membranas_celulas.png)
+![Composição das membranas](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_membranas_celulas.png)
 
 | Membrana | Monocamada externa | Monocamada interna | Superfície externa |
 |----------|--------------------|--------------------|--------------------|

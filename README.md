@@ -4,7 +4,7 @@ Material de aula executável no Google Colab: uma proteína e uma membrana que s
 
 | Notebook | Resolução | Sistemas | Colab |
 |----------|-----------|----------|-------|
-| `MD_Martini.ipynb` | coarse-grained, Martini 3 | ubiquitina (1UBQ) em água; automontagem de bicamada de DSPC | <a href="https://colab.research.google.com/github/madsondeluna/aula_dinamica_molecular/blob/main/MD_Martini.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
+| `MD_Martini.ipynb` | coarse-grained, Martini 3 | ubiquitina (1UBQ) em água; automontagem de bicamada de DSPC | <a href="https://colab.research.google.com/github/madsondeluna/curso-dinamica-molecular-202x/blob/main/MD_Martini.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
 
 
 ## Índice
@@ -330,7 +330,7 @@ Versão anterior do curso, em resolução all-atom, mantida em `legado/`.
 
 | Arquivo | Conteúdo | Colab |
 |---------|----------|-------|
-| `legado/MD_GMX.ipynb` | ubiquitina (1UBQ) em água, CHARMM36m; Exercício 1 de Lemkul (2024) | <a href="https://colab.research.google.com/github/madsondeluna/aula_dinamica_molecular/blob/main/legado/MD_GMX.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
+| `legado/MD_GMX.ipynb` | ubiquitina (1UBQ) em água, CHARMM36m; Exercício 1 de Lemkul (2024) | <a href="https://colab.research.google.com/github/madsondeluna/curso-dinamica-molecular-202x/blob/main/legado/MD_GMX.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
 | `legado/mdp/` | `ions.mdp`, `minim.mdp`, `nvt.mdp`, `npt.mdp`, `md.mdp` (CHARMM36m) | |
 | `legado/lemkul-2024-...pdf` | artigo de referência | |
 
