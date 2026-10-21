@@ -50,17 +50,19 @@ def _assets():
     return _ASSETS
 
 
-# Beads Martini: nome na legenda, slot da serie, selecao py3Dmol, raio (A)
+# Beads Martini: nome na legenda, cor quimica (vmd_view.sh do AMP-evo-MD), selecao py3Dmol, raio (A)
+from replica_views import SEM
 _TAILS = [f'C{i}{s}' for i in range(1, 6) for s in 'AB'] + [f'D{i}{s}' for i in range(1, 6) for s in 'AB']
 BEADS = {
-    'BB':  ('Backbone (BB)',          1, {'atom': 'BB'}, 2.0),
-    'SC':  ('Cadeia lateral (SC)',    2, {'atom': ['SC1', 'SC2', 'SC3', 'SC4', 'SC5']}, 1.7),
-    'NC3': ('Colina (NC3)',           3, {'atom': 'NC3'}, 2.1),
-    'PO4': ('Fosfato (PO4)',          4, {'atom': 'PO4'}, 2.1),
-    'GL':  ('Glicerol (GL1, GL2)',    5, {'atom': ['GL1', 'GL2']}, 2.0),
-    'C':   ('Caudas (C1A a C4B)',     6, {'atom': _TAILS}, 2.0),
-    'W':   ('Água W (4 H₂O)',         7, {'resn': 'W'}, 1.6),
-    'ION': ('Íons Na⁺ e Cl⁻',         8, {'resn': ['NA', 'CL', 'ION']}, 1.9),
+    'BB':  ('Backbone (BB)',          SEM['protein'],    {'atom': 'BB'}, 2.0),
+    'SC':  ('Cadeia lateral (SC)',    SEM['protein_sc'], {'atom': ['SC1', 'SC2', 'SC3', 'SC4', 'SC5']}, 1.7),
+    'NC3': ('Colina (NC3)',           SEM['head_cat'],   {'atom': 'NC3'}, 2.1),
+    'PO4': ('Fosfato (PO4)',          SEM['po4'],        {'atom': 'PO4'}, 2.1),
+    'GL':  ('Glicerol (GL1, GL2)',    SEM['glyc'],       {'atom': ['GL1', 'GL2']}, 2.0),
+    'C':   ('Caudas (C1A a C4B)',     SEM['tail'],       {'atom': _TAILS}, 2.0),
+    'W':   ('Água W (4 H₂O)',         SEM['water'],      {'resn': 'W'}, 1.6),
+    'NA':  ('Na⁺',                    SEM['na'],         {'atom': 'NA'}, 1.9),
+    'CL':  ('Cl⁻',                    SEM['cl'],         {'atom': 'CL'}, 1.9),
 }
 
 STEPS = {
@@ -71,7 +73,7 @@ PART_NAME = {'A': 'Parte A, ubiquitina', 'B': 'Parte B, bicamada de DSPC'}
 
 
 def style_beads(view, model=None, water=True, water_opacity=0.25, viewer=None):
-    """Uma esfera por bead, cor pelo slot da serie."""
+    """Uma esfera por bead, cor quimica do bead."""
     def sel(d):
         d = dict(d)
         if model is not None:
@@ -79,13 +81,13 @@ def style_beads(view, model=None, water=True, water_opacity=0.25, viewer=None):
         return d
     kw = {'viewer': viewer} if viewer is not None else {}
     view.setStyle(sel({}), {'sphere': {'color': INK, 'radius': 1.8}}, **kw)
-    for key, (_, slot, q, r) in BEADS.items():
+    for key, (_, color, q, r) in BEADS.items():
         if key == 'W':
             continue
-        view.setStyle(sel(q), {'sphere': {'color': CHART[slot - 1], 'radius': r}}, **kw)
+        view.setStyle(sel(q), {'sphere': {'color': color, 'radius': r}}, **kw)
     w = BEADS['W']
     if water:
-        view.setStyle(sel(w[2]), {'sphere': {'color': CHART[w[1] - 1], 'radius': w[3], 'opacity': water_opacity}}, **kw)
+        view.setStyle(sel(w[2]), {'sphere': {'color': w[1], 'radius': w[3], 'opacity': water_opacity}}, **kw)
     else:
         view.setStyle(sel(w[2]), {}, **kw)
 
@@ -129,8 +131,10 @@ def _legend(keys):
     items = []
     for k in keys:
         if k in BEADS:
-            label, slot = BEADS[k][0], BEADS[k][1]
-            items.append(f'<li><span class="swatch swatch-{slot}" aria-hidden="true"></span>{html.escape(label)}</li>')
+            label, color = BEADS[k][0], BEADS[k][1]
+            items.append(f'<li><span class="swatch" style="background:{color}" aria-hidden="true"></span>{html.escape(label)}</li>')
+        elif isinstance(k[1], str) and k[1].startswith('#'):
+            items.append(f'<li><span class="swatch" style="background:{k[1]}" aria-hidden="true"></span>{html.escape(k[0])}</li>')
         else:
             label, slot = k
             cls = 'swatch-ink' if slot == 'ink' else f'swatch-{slot}'
@@ -196,3 +200,21 @@ def stage(part, step, title, structure=None, text=(), legend=(), facts=None, com
     inner = (f'<article class="stage card-glass lit" data-lit>{_head(part, step, title)}{body}'
              + (_compare(compare) if compare else '') + '</article>')
     display(HTML(_page(inner)))
+
+
+def card(eyebrow, title, figure_html, text=(), legend=(), facts=None):
+    """Cartao sem barra de etapas, com legenda em cores de dados: legend = [(rotulo, cor), ...]."""
+    items = ''.join(f'<li><span class="swatch" style="background:{html.escape(c)}" aria-hidden="true"></span>'
+                    f'{html.escape(l)}</li>' for l, c in legend)
+    paras = ''.join(f'<p class="prose">{t}</p>' for t in text)
+    inner = (f'<article class="stage card-glass lit" data-lit>'
+             f'<header class="stage-head"><p class="eyebrow">{html.escape(eyebrow)}</p>'
+             f'<h2 class="display stage-title">{html.escape(title)}</h2></header>'
+             f'<div class="stage-body">'
+             f'<figure class="stage-figure stage-figure-wide glass glass-frost lit lit-edge" data-lit>{figure_html}</figure>'
+             f'<div class="stage-text stage-text-wide">{paras}'
+             + (f'<ul class="stage-legend">{items}</ul>' if legend else '')
+             + (_facts(facts) if facts else '')
+             + '</div></div></article>')
+    display(HTML(_page(inner)))
+

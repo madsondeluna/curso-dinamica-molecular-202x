@@ -18,7 +18,7 @@ from pure import palette
 
 INK = palette.tokens('light')['text']
 BAND = palette.tokens('light')['dim']
-COLORS = {'protein': palette.CATEGORICAL[0], 'membrane': palette.CATEGORICAL[1]}
+COLORS = {'protein': '#de8552', 'membrane': '#4c72b0'}   # cores quimicas do vmd_view.sh (proteina, colina)
 NAMES = {'protein': 'Ubiquitina (Martini 3)', 'membrane': 'Bicamada de DSPC (Martini 3)'}
 LINESTYLES = ['-', (0, (6, 3)), (0, (1, 2))]
 MARKERS = ['o', 's', '^']

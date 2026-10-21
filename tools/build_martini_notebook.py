@@ -219,7 +219,7 @@ if not cached(mdp_files, 'arquivos .mdp'):
     for f in mdp_files:
         os.system(f'wget -q {REPO}/mdp_martini/{f} -O {f}')
 
-viz_files = ['viz/stage_viewer.py', 'viz/stage.css', 'viz/replica_plots.py',
+viz_files = ['viz/stage_viewer.py', 'viz/stage.css', 'viz/replica_plots.py', 'viz/replica_views.py',
              'viz/pure/__init__.py', 'viz/pure/palette.py', 'viz/pure/mpl.py',
              'viz/pure/tokens.css', 'viz/pure/patterns.css', 'viz/pure/light.css', 'viz/pure/light.js']
 if not cached(viz_files, 'visualizador'):
@@ -249,7 +249,7 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 from pure import mpl as pure_mpl, palette
-from stage_viewer import stage, style_beads, CHART, INK
+from stage_viewer import stage, card, style_beads, CHART, INK, BEADS
 pure_mpl.use('light')
 C1 = palette.series(1)[0]
 
@@ -511,6 +511,12 @@ md('''
 **Por que a rede elástica?** No Martini, a estrutura secundária é imposta pela topologia e não emerge das interações. Sem molas entre os beads do backbone, a estrutura terciária se desfaz em poucos nanossegundos.
 
 As comparações com all-atom e united-atom são **teóricas**: o número de partículas vem da composição química de cada resíduo, e o custo, de contagens de partículas, vizinhos e passos.
+
+**Na aula:** como cada resíduo vira beads, e a mesma fenilalanina em quatro resoluções.
+
+![Mapeamento de resíduos](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_mapeamento_residuos.png)
+
+![Quatro resoluções](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_resolucoes_molecula.png)
 ''')
 
 code('''
@@ -547,8 +553,8 @@ code('''
 # Cartao 1: mapeamento atomistico -> CG, estruturas sobrepostas
 def mapping_style(view):
     view.setStyle({'model': 0}, {'stick': {'color': INK, 'radius': 0.12}})
-    view.setStyle({'model': 1, 'atom': 'BB'}, {'sphere': {'color': CHART[0], 'radius': 1.4, 'opacity': 0.85}})
-    view.setStyle({'model': 1, 'not': {'atom': 'BB'}}, {'sphere': {'color': CHART[1], 'radius': 1.2, 'opacity': 0.85}})
+    view.setStyle({'model': 1, 'atom': 'BB'}, {'sphere': {'color': BEADS['BB'][1], 'radius': 1.4, 'opacity': 0.85}})
+    view.setStyle({'model': 1, 'not': {'atom': 'BB'}}, {'sphere': {'color': BEADS['SC'][1], 'radius': 1.2, 'opacity': 0.85}})
 
 import py3Dmol
 v = py3Dmol.view(width='100%', height=440)
@@ -574,6 +580,12 @@ md('''
 ## Passo A2: Topologia, caixa e solvatação
 
 O `topol.top` inclui primeiro a matriz de interações do Martini 3, depois a proteína (`molecule_0.itp`), o solvente e os íons. A caixa cúbica deixa 1,2 nm entre a proteína e a borda. O `gmx solvate` preenche o volume com cópias de `water.gro`; `-radius 0.21` aproxima o raio de um bead Martini (o padrão de 0,105 nm é para átomos).
+
+**Na aula:** a caixa periódica e por que um bead W não é um átomo grande.
+
+![PBC e cutoff](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_pbc_cutoff.png)
+
+![Mapeamento 4:1 e Lennard-Jones](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_mapeamento_lj.png)
 ''')
 
 code('''
@@ -630,7 +642,7 @@ stage('A', 4, 'Íons', structure='ubq_ions.gro', water=False,
       text=[f'O <code>genion</code> troca {2 * N_PAIRS} beads W por íons. A água está oculta neste cartão para os íons aparecerem.',
             'Com <code>-conc 0.15</code>, o genion contaria 1 bead W como 1 molécula e poria um quarto dos íons. '
             'O número de pares vem do volume da caixa.'],
-      legend=['BB', 'SC', 'ION'],
+      legend=['BB', 'SC', 'NA', 'CL'],
       facts={'volume (nm³)': num(V, 1), 'pares NaCl': N_PAIRS, 'concentração (M)': '0,15', 'carga líquida': 0},
       compare={'aa': ('Na⁺ e Cl⁻ de 1 átomo', '', 'O genion -conc funciona direto: cada água é uma molécula. A camada de hidratação é feita de águas explícitas.'),
                'ua': ('Na⁺ e Cl⁻ de 1 átomo', '', 'Igual ao all-atom: íons e águas explícitos.'),
@@ -641,6 +653,8 @@ md('''
 ## Passo A4: Minimização de energia
 
 Steepest descent até a força máxima ficar abaixo de 1000 kJ/mol/nm. A rede elástica e as cadeias laterais com geometria fixa impedem forças muito menores; o critério de 500 kJ/mol/nm do exercício atomístico não converge aqui.
+
+![Minimização e dinâmica](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_minimizacao_vs_md.png)
 ''')
 
 code('''
@@ -661,7 +675,7 @@ stage('A', 5, 'Minimização de energia', structure='em.gro', water=False,
       text=['O steepest descent move cada partícula na direção da força até remover sobreposições entre beads. '
             'Não é dinâmica: não há tempo nem temperatura.',
             'A estrutura quase não muda; o que muda é a energia, que cai até um platô.'],
-      legend=['BB', 'SC', 'ION'],
+      legend=['BB', 'SC', 'NA', 'CL'],
       facts={'passos': len(d), 'energia final (kJ/mol)': num(d[-1, 1]), 'força máxima (kJ/mol/nm)': num(fmax), 'critério': '1000'},
       compare={'aa': ('emtol = 500', '', 'No Exercício 1 o critério é 500 kJ/mol/nm, com ~30 mil átomos.'),
                'ua': ('emtol = 500 a 1000', '', 'Mesmo algoritmo, sistema do tamanho do all-atom por causa da água.'),
@@ -699,7 +713,7 @@ stage('A', 6, 'Equilibração NPT', structure='npt.gro',
       text=['Temperatura e pressão chegam aos valores alvo enquanto o backbone fica preso. '
             'A caixa encolhe ou cresce um pouco até a densidade estabilizar.',
             'A densidade de água W Martini fica perto de 1000 kg/m³, como a água real.'],
-      legend=['BB', 'SC', 'W', 'ION'],
+      legend=['BB', 'SC', 'W', 'NA', 'CL'],
       facts={'temperatura média (K)': num(d[:, 1].mean(), 1), 'densidade (kg/m³)': num(d[len(d)//2:, 2].mean()),
              'aresta da caixa (nm)': num(box_edge('npt.gro'), 2), 'ns/dia': num(performance('npt.log') or 0)},
       compare={'aa': ('dt = 2 fs', '', 'NVT e depois NPT no Exercício 1. Ligações com H restritas pelo LINCS para permitir 2 fs.'),
@@ -713,6 +727,10 @@ md('''
 Restrições removidas, passo de 20 fs: 750 000 passos.
 
 > **Tempo de execução estimado no Colab:** 45 a 75 minutos. Com o Drive montado, a simulação é retomada do último checkpoint se a sessão cair.
+
+**Na aula:** por que o Martini usa 20 fs e o all-atom 2 fs.
+
+![Passo de tempo](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_passo_de_tempo.png)
 ''')
 
 code('''
@@ -749,6 +767,10 @@ md('''
 ## Análise A: RMSD, RMSF, raio de giração e mapa de contatos
 
 As mesmas análises do notebook atomístico, calculadas sobre os beads BB (o equivalente CG do Cα). DSSP e ligações de hidrogênio não se aplicam: não há átomos de backbone nem hidrogênios, e a estrutura secundária está fixada na topologia.
+
+**Na aula:** com a rede elástica, a proteína fica num poço único em torno da estrutura inicial (painel da direita).
+
+![Funil de energia](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_funil.png)
 ''')
 
 code('''
@@ -777,7 +799,7 @@ top_res = rmsf[np.argsort(rmsf[:, 1])[-4:][::-1], 0].astype(int)
 stage('A', 8, 'Análise', structure='md_prot.gro', water=False,
       text=['A rede elástica mantém o RMSD baixo e estável: ele não mede enovelamento, porque as molas impedem o desenovelamento.',
             'O RMSF continua informativo. A cauda C-terminal tem poucas molas e é a região mais móvel, como na simulação atomística.'],
-      legend=['BB', 'SC', 'ION'],
+      legend=['BB', 'SC', 'NA', 'CL'],
       facts={'RMSD médio (nm)': num(rmsd[len(rmsd)//2:, 1].mean(), 3), 'Rg médio (nm)': num(rg[:, 1].mean(), 3),
              'resíduos mais móveis': ', '.join(map(str, top_res)), 'RMSF máximo (nm)': num(rmsf[:, 1].max(), 2)},
       compare={'aa': ('todas as análises', '', 'RMSD, RMSF, Rg, contatos, DSSP ao longo do tempo e ligações de hidrogênio.'),
@@ -939,6 +961,10 @@ O acoplamento de pressão é **isotrópico**: ainda não há bicamada, logo não
 > **Duração:** o tutorial oficial usa 30 ns. Este notebook usa 15 ns; a seção de réplicas mostra quanto o tempo de formação varia entre sementes.
 >
 > **Tempo de execução estimado no Colab:** 45 a 75 minutos. Com o Drive montado, a simulação é retomada do último checkpoint se a sessão cair: basta executar a célula de novo.
+
+**Na aula:** o relógio do Martini anda mais rápido que o físico, porque a paisagem é mais lisa.
+
+![Relógios diferentes](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_relogios.png)
 ''')
 
 code('''
@@ -972,6 +998,8 @@ md('''
 $$Q = \\left\\langle \\tfrac{3}{2}\\,\\hat{u}\\hat{u}^T - \\tfrac{1}{2} I \\right\\rangle$$
 
 e $S$ é o seu maior autovalor. Com orientações aleatórias, $S$ fica perto de 0,2 (e não de 0: o maior autovalor de uma amostra finita de 128 vetores é sempre positivo); com todos os lipídios alinhados, $S \\to 1$. O autovetor correspondente é a normal da bicamada, encontrada sem supor em qual eixo ela se formou.
+
+![Paisagem 2D](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/fund_paisagem_2d.png)
 ''')
 
 code('''
@@ -1139,7 +1167,8 @@ if FORMED:
     po4e, tails = tq.select('name PO4'), tq.select('name =~ "C[1-4][AB]"')
     groups = {'NC3': tq.select('name NC3'), 'PO4': po4e, 'GL': tq.select('name =~ "GL[12]"'),
               'Caudas': tails, 'W': tq.select('resname W')}
-    slot = {'NC3': 3, 'PO4': 4, 'GL': 5, 'Caudas': 6, 'W': 7}   # mesmos slots dos cartoes
+    gcolor = {'NC3': BEADS['NC3'][1], 'PO4': BEADS['PO4'][1], 'GL': BEADS['GL'][1],
+              'Caudas': '#8c8c8c', 'W': BEADS['W'][1]}            # mesmas cores dos cartoes
     Lz = last.unitcell_lengths[:, 2]
     z = last.xyz[:, :, 2]
     # Centro da bicamada por media circular das caudas (robusto a borda periodica)
@@ -1151,7 +1180,7 @@ if FORMED:
     fig, ax = plt.subplots(figsize=(8, 4))
     for name, idx in groups.items():
         h, _ = np.histogram(zc[:, idx].ravel(), bins=bins)
-        ax.plot(mid, h / last.n_frames, label=name, color=CHART[slot[name] - 1], lw=1.6)
+        ax.plot(mid, h / last.n_frames, label=name, color=gcolor[name], lw=1.6)
     pure_mpl.finish(ax, title='Perfil de densidade ao longo da normal', subtitle='beads por fatia',
                     xlabel='Distância ao centro da bicamada (nm)')
     plt.show()
@@ -1243,6 +1272,67 @@ with plt.rc_context({'savefig.facecolor': 'white'}):   # fundo branco no estilo 
 names = {'t_form': ('Formacao da bicamada', 'ns'), 'd_pp': ('Espessura D_PP', 'nm'), 'apl': ('Area por lipidio', 'nm2')}
 for k, (m, sd, n) in stats.items():
     print(f'{names[k][0]}: {m:.3f} +- {sd:.3f} {names[k][1]} (n = {n})')
+''')
+
+md('''
+## Réplicas lado a lado em 3D
+
+Os três visualizadores de cada cartão são ligados: girar ou aproximar um move os outros dois, e as animações andam juntas. Cores e representação seguem a convenção do Martini no VMD: bastões nas ligações entre beads, esferas nas cabeças polares e água translúcida.
+''')
+
+code('''
+import os
+from replica_views import export_replica, triple_view, SEM
+
+export_replica('.')                                   # arquivos de visualizacao desta replica
+VIZ = os.path.join(BASE_DIR, 'summaries', 'viz')
+os.makedirs(VIZ, exist_ok=True)
+
+def viz_path(r, kind):
+    own = os.path.join(BASE_DIR, f'rep{r}', f'viz_{kind}.pdb')
+    if os.path.exists(own) and os.path.getsize(own):
+        return own
+    remote = os.path.join(VIZ, f'rep{r}_{kind}.pdb')
+    if not os.path.exists(remote) or os.path.getsize(remote) == 0:
+        os.system(f'wget -q {REPO}/results/viz/rep{r}_{kind}.pdb -O {remote}')
+    return remote
+
+state = {r: ('bicamada' if s.get('membrane', {}).get('formed') else 'sem bicamada') for r, s in sums.items()}
+LEG_PROT = [('Backbone (BB)', SEM['protein']), ('Cadeia lateral (SC)', SEM['protein_sc'])]
+LEG_MEM = [('Colina NC3', SEM['head_cat']), ('Fosfato PO4', SEM['po4']), ('Glicerol GL1, GL2', SEM['glyc']),
+           ('Caudas', SEM['tail']), ('Água W', SEM['water'])]
+
+card('Réplicas lado a lado', 'Ubiquitina: 15 ns em três réplicas',
+     triple_view([viz_path(r, 'prot') for r in (1, 2, 3)], 'protein', [f'Réplica {r}' for r in (1, 2, 3)],
+                 animate=True),
+     text=['A rede elástica mantém o enovelamento nas três réplicas; o que se move é a cauda C-terminal e as alças.'],
+     legend=LEG_PROT)
+
+for r in (1, 2, 3):
+    viz_path(r, 'mem_water')                          # agua em modelo separado, translucido
+
+card('Réplicas lado a lado', 'Membrana: estado final',
+     triple_view([viz_path(r, 'mem_final') for r in (1, 2, 3)], 'membrane',
+                 [f'Réplica {r}: {state.get(r, "?")}' for r in (1, 2, 3)], height=460),
+     text=['Bicamadas vistas de perfil, com a normal na vertical. A mesma receita, com sementes diferentes, '
+           'leva a bicamadas em duas réplicas e a uma fase contínua na terceira.'],
+     legend=LEG_MEM)
+''')
+
+code('''
+card('Réplicas lado a lado', 'Automontagem: 0 a 15 ns',
+     triple_view([viz_path(r, 'mem_anim') for r in (1, 2, 3)], 'membrane', [f'Réplica {r}' for r in (1, 2, 3)],
+                 height=460, animate=True, water=False),
+     text=['Só os lipídios, um quadro por nanossegundo. Compare o momento em que as cabeças se separam em duas camadas.'],
+     legend=LEG_MEM[:4])
+''')
+
+md('''
+### Início e fim em projeção ortográfica
+
+![Membrana: início e fim nas três réplicas](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/martini_vistas_membrana.png)
+
+![Ubiquitina: início e fim nas três réplicas](https://raw.githubusercontent.com/madsondeluna/aula_dinamica_molecular/main/imagens/martini_vistas_proteina.png)
 ''')
 
 md('''
