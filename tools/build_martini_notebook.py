@@ -53,12 +53,27 @@ md('''
 md('''
 ## Antes de começar: mantenha a sessão viva e salve no Drive
 
-Execute as duas células abaixo **antes de qualquer outra coisa**. Com o Drive montado, todos os arquivos ficam em `MyDrive/aula_martini/repN`.
+Execute as três células abaixo **antes de qualquer outra coisa**. A primeira reinicia o ambiente sozinha se ele já tiver sido usado (o Colab pode mostrar o aviso de que a sessão travou: é esperado); nesse caso, rode **Ambiente de execução > Executar tudo** de novo. Com o Drive montado, todos os arquivos ficam em `MyDrive/aula_martini/repN`.
+
+**GPU.** Para simular do zero (`USE_PRECOMPUTED = False`), escolha **Ambiente de execução > Alterar o tipo de ambiente de execução > T4 GPU** antes de executar. O notebook detecta a GPU e a usa no `mdrun` quando o GROMACS instalado tem suporte; sem GPU, ou sem suporte, a simulação roda na CPU. Com a réplica pré-computada, a GPU não faz diferença.
 
 | Parâmetro | Valor padrão | Efeito |
 |-----------|--------------|--------|
 | `REPLICA` | `1` | qual das três réplicas usar (1, 2 ou 3); cada uma tem sementes aleatórias diferentes |
 | `USE_PRECOMPUTED` | `True` | baixa do GitHub a réplica já simulada: todas as etapas aparecem como "ja pronto" e os cartões e gráficos saem na hora. Com `False`, o notebook simula tudo no Colab (2 a 3 h) | Ao reabrir o notebook, cada etapa já concluída é detectada e reaproveitada; uma simulação interrompida continua do último checkpoint em vez de recomeçar.
+''')
+
+code('''
+# Reinicio limpo: se este kernel ja executou outras celulas, reinicia o ambiente.
+# Variaveis e modulos de uma execucao anterior causam erros ao recomecar do inicio.
+# Os arquivos em /content e no Drive continuam la; so a memoria do Python e limpa.
+import sys
+_ip = get_ipython()
+if 'google.colab' in sys.modules and _ip.execution_count > 1:
+    print('Ambiente ja usado: reiniciando. Depois, execute de novo: Ambiente de execucao > Executar tudo.')
+    _ip.kernel.do_shutdown(True)
+else:
+    print('Ambiente limpo: pode seguir.')
 ''')
 
 code('''
@@ -130,8 +145,17 @@ subprocess.run([sys.executable, '-m', 'pip', 'install', '-q',
 os.system("gmx --version 2>&1 | grep 'GROMACS version'")
 os.system("martinize2 -V 2>&1 | tail -1")
 
+# GPU: usada quando o Colab tem uma GPU e o GROMACS instalado tem suporte (CUDA ou OpenCL)
+_gpu_hw = shutil.which('nvidia-smi') is not None and os.system('nvidia-smi -L > /dev/null 2>&1') == 0
+_ver = subprocess.run(['gmx', '--version'], capture_output=True, text=True).stdout
+_gpu_build = next((l.split(':', 1)[1].strip() for l in _ver.splitlines() if l.strip().startswith('GPU support')), 'disabled')
+USE_GPU = _gpu_hw and _gpu_build.lower() != 'disabled'
+print('GPU:', 'sim (' + _gpu_build + ')' if USE_GPU else
+      ('detectada, mas o GROMACS instalado nao tem suporte: CPU' if _gpu_hw else 'nao detectada: CPU'))
+
 # Uma unica simulacao por vez: 1 rank MPI, OpenMP usa todos os nucleos
-MDRUN = 'gmx mdrun -ntmpi 1'
+MDRUN_CPU = 'gmx mdrun -ntmpi 1'
+MDRUN = MDRUN_CPU + (' -nb gpu' if USE_GPU else '')
 os.environ['GMX_MAXBACKUP'] = '-1'   # sobrescreve arquivos sem criar #backups#
 
 import json, random, re
@@ -181,7 +205,10 @@ def run_md(name, label, mdp, conf, top, extra=''):
     if os.path.exists(f'{name}.cpt'):
         print(f'  retomando {label} do checkpoint {name}.cpt')
     # -cpt 5: checkpoint a cada 5 min; -cpi sem arquivo existente comeca do zero
-    os.system(f'{MDRUN} -deffnm {name} -cpi {name}.cpt -cpt 5 -quiet')
+    status = os.system(f'{MDRUN} -deffnm {name} -cpi {name}.cpt -cpt 5 -quiet')
+    if status != 0 and MDRUN != MDRUN_CPU and not os.path.exists(f'{name}.gro'):
+        print(f'  {label}: a GPU falhou; repetindo na CPU')
+        os.system(f'{MDRUN_CPU} -deffnm {name} -cpi {name}.cpt -cpt 5 -quiet')
     print(f'  {label}: ' + ('concluido' if os.path.exists(f'{name}.gro') else 'INCOMPLETO, execute a celula de novo'))
 
 def gmx_cached(outputs, label, cmd):
