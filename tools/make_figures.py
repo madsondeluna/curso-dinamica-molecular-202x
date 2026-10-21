@@ -1,0 +1,470 @@
+"""Gera as ilustracoes do capitulo Fundamentos (imagens/fund_*.png).
+
+Estilo de figura de artigo, o mesmo de viz/replica_plots.py. Esquemas
+marcados como ilustrativos usam funcoes analiticas ou modelos de brinquedo;
+as coordenadas moleculares sao reais (1UBQ).
+
+Uso: python tools/make_figures.py --aa ubq_aa.gro --ua ubq_ua.gro --cg ubq_cg.pdb
+"""
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import Circle, FancyArrowPatch, Rectangle
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'viz'))
+from pure import palette, mpl as pure_mpl  # noqa: E402
+from replica_plots import STYLE, INK, BAND  # noqa: E402
+
+C = palette.CATEGORICAL
+OUT = ROOT / 'imagens'
+DPI = 200
+pure_mpl.use('light')          # fontes e colormaps pure
+plt.rcParams.update(STYLE)
+plt.rcParams.update({'font.size': 10})
+
+
+def save(fig, name):
+    fig.savefig(OUT / name, dpi=DPI, bbox_inches='tight')
+    plt.close(fig)
+    print('  ', name)
+
+
+def frame_off(ax):
+    ax.set_xticks([]); ax.set_yticks([])
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+
+
+# ---------------------------------------------------------------- 1. ciclo da MD
+def fig_md_loop():
+    fig, ax = plt.subplots(figsize=(8, 4.6))
+    frame_off(ax); ax.set_xlim(0, 10); ax.set_ylim(0, 6)
+    boxes = [(5, 5.1, 'Posições  $\\mathbf{r}(t)$'),
+             (8.4, 3, 'Forças  $\\mathbf{F} = -\\nabla U(\\mathbf{r})$'),
+             (5, 0.9, 'Acelerações  $\\mathbf{a} = \\mathbf{F}/m$'),
+             (1.6, 3, 'Velocidades  $\\mathbf{v}(t+\\Delta t/2)$')]
+    for x, y, t in boxes:
+        ax.text(x, y, t, ha='center', va='center', fontsize=11,
+                bbox=dict(boxstyle='round,pad=0.5', fc='white', ec=INK, lw=1))
+    pts = [(5, 5.1), (8.4, 3), (5, 0.9), (1.6, 3)]
+    for i in range(4):
+        a, b = pts[i], pts[(i + 1) % 4]
+        ax.add_patch(FancyArrowPatch(a, b, connectionstyle='arc3,rad=-0.25', arrowstyle='-|>',
+                                     mutation_scale=16, color=C[0], lw=1.6, shrinkA=38, shrinkB=38))
+    ax.text(5, 3, 'repete a cada passo $\\Delta t$\n(leap-frog)', ha='center', va='center', fontsize=10, color=INK)
+    ax.set_title('Ciclo de integração da dinâmica molecular')
+    save(fig, 'fund_ciclo_md.png')
+
+
+# ---------------------------------------------------------------- 2. termos do campo de forca
+def fig_force_field():
+    fig, axes = plt.subplots(1, 5, figsize=(17, 3.4))
+    r = np.linspace(0.08, 0.2, 200); b0, kb = 0.14, 3e5
+    axes[0].plot(r, 0.5 * kb * (r - b0) ** 2, color=C[0])
+    axes[0].set(title='Ligação', xlabel='r (nm)', ylabel='U (kJ/mol)', ylim=(0, 400))
+    th = np.linspace(80, 150, 200); t0, kt = 109.5, 0.1
+    axes[1].plot(th, 0.5 * kt * (th - t0) ** 2, color=C[0])
+    axes[1].set(title='Ângulo', xlabel='θ (graus)')
+    ph = np.linspace(-180, 180, 400)
+    axes[2].plot(ph, 5 * (1 + np.cos(np.radians(3 * ph))), color=C[0])
+    axes[2].set(title='Diedro', xlabel='φ (graus)', xticks=[-180, -60, 60, 180])
+    rr = np.linspace(0.28, 1.2, 400); sg, e = 0.315, 0.636
+    axes[3].plot(rr, 4 * e * ((sg / rr) ** 12 - (sg / rr) ** 6), color=C[0])
+    axes[3].axhline(0, color=INK, lw=0.6)
+    axes[3].set(title='Lennard-Jones (O-O, TIP3P)', xlabel='r (nm)', ylim=(-1.2, 2.5))
+    rq = np.linspace(0.1, 1.2, 400)
+    axes[4].plot(rq, 138.935 * (-0.834 * 0.417) / rq, color=C[0], label='O⁻ e H⁺ (atrai)')
+    axes[4].plot(rq, 138.935 * (0.417 * 0.417) / rq, color=C[0], ls=(0, (6, 3)), label='H⁺ e H⁺ (repele)')
+    axes[4].axhline(0, color=INK, lw=0.6)
+    axes[4].set(title='Coulomb (cargas TIP3P, vácuo)', xlabel='r (nm)', ylim=(-500, 250))
+    axes[4].legend(loc='lower right', fontsize=8)
+    fig.suptitle('Termos de um campo de força clássico', y=1.05, fontsize=11)
+    fig.tight_layout()
+    save(fig, 'fund_campo_de_forca.png')
+
+
+# ---------------------------------------------------------------- 3. passo de tempo
+def fig_timestep():
+    period = 11.0  # fs, estiramento C-H (~3000 cm-1)
+    t = np.linspace(0, 60, 2000)
+    fig, axes = plt.subplots(1, 3, figsize=(13, 3.4), sharey=True)
+    for ax, dt in zip(axes, (1, 2, 10)):
+        ts = np.arange(0, 60 + 1e-9, dt)
+        l1, = ax.plot(t, np.cos(2 * np.pi * t / period), color=INK, lw=0.8)
+        l2, = ax.plot(ts, np.cos(2 * np.pi * ts / period), 'o-', color=C[0], ms=4, lw=1.2)
+        ax.set(title=f'Δt = {dt} fs = {dt}×10⁻⁶ ns', xlabel='Tempo (fs; 1 fs = 10⁻⁶ ns)', ylim=(-1.15, 1.15))
+    axes[0].set_ylabel('Deslocamento (rel.)')
+    fig.legend([l1, l2], ['vibração C-H real (período ~11 fs)', 'o que o integrador enxerga'],
+               loc='upper center', ncol=2, bbox_to_anchor=(0.5, 1.02), fontsize=9)
+    fig.suptitle('O passo de tempo precisa ser muito menor que a vibração mais rápida', y=1.1, fontsize=11)
+    fig.tight_layout()
+    save(fig, 'fund_passo_de_tempo.png')
+
+
+# ---------------------------------------------------------------- 4. PBC e cutoff
+def fig_pbc():
+    rng = np.random.default_rng(3)
+    pts = rng.uniform(0.05, 0.95, (22, 2))
+    fig, ax = plt.subplots(figsize=(6.4, 6.9))
+    for i in (-1, 0, 1):
+        for j in (-1, 0, 1):
+            central = i == 0 and j == 0
+            ax.add_patch(Rectangle((i, j), 1, 1, fill=False, ec=INK, lw=1.6 if central else 0.6,
+                                   ls='-' if central else (0, (4, 3))))
+            ax.scatter(pts[:, 0] + i, pts[:, 1] + j, s=28, color=C[0], alpha=1 if central else 0.3, lw=0)
+    p = pts[0]
+    ax.add_patch(Circle(p, 0.38, fill=False, ec=C[1], lw=1.6))
+    ax.scatter(*p, s=60, color=C[1], zorder=3)
+    ax.annotate('esfera de corte $r_c$: a partícula interage\ncom vizinhos da caixa ao lado (imagens)',
+                xy=(p[0] - 0.36, p[1] - 0.12), xytext=(-0.95, -0.85),
+                arrowprops=dict(arrowstyle='-', color=C[1]), color=C[1], fontsize=9,
+                bbox=dict(boxstyle='round,pad=0.3', fc='white', ec='none'))
+    ax.text(0.5, 1.03, 'caixa central', ha='center', va='bottom', color=INK)
+    ax.set_xlim(-1, 2); ax.set_ylim(-1, 2.1); ax.set_aspect('equal'); frame_off(ax)
+    ax.set_title('Condições periódicas de contorno')
+    save(fig, 'fund_pbc_cutoff.png')
+
+
+# ---------------------------------------------------------------- 5. mesma molecula em QM, AA, UA e CG
+def read_res(path, resid, fmt):
+    rows = []
+    for l in open(path):
+        if fmt == 'gro':
+            if len(l) < 44 or not l[:5].strip().isdigit():
+                continue
+            if int(l[:5]) != resid:
+                continue
+            name = l[10:15].strip(); xyz = [float(l[20:28]), float(l[28:36]), float(l[36:44])]
+            rows.append((name, np.array(xyz) * 10))
+        else:
+            if not l.startswith('ATOM') or int(l[22:26]) != resid:
+                continue
+            name = l[12:16].strip(); xyz = [float(l[30:38]), float(l[38:46]), float(l[46:54])]
+            rows.append((name, np.array(xyz)))
+    return rows
+
+
+def project(rows, ref):
+    X = np.array([x for _, x in rows]) - ref.mean(0)
+    u, s, vt = np.linalg.svd(ref - ref.mean(0))
+    return X @ vt[:2].T
+
+
+def bonds(P, names, cut):
+    out = []
+    for i in range(len(P)):
+        for j in range(i + 1, len(P)):
+            if np.linalg.norm(P[i] - P[j]) < cut:
+                out.append((i, j))
+    return out
+
+
+def fig_resolutions(aa, ua, cg, resid=45):
+    A, U, G = read_res(aa, resid, 'gro'), read_res(ua, resid, 'gro'), read_res(cg, resid, 'pdb')
+    ref = np.array([x for n, x in A if not n.startswith('H')])
+    PA, PU, PG = project(A, ref), project(U, ref), project(G, ref)
+    is_h = lambda n: n.startswith('H')
+    fig, axes = plt.subplots(1, 4, figsize=(15, 4.4))
+    # QM: densidade eletronica esquematica (soma de gaussianas)
+    gx, gy = np.meshgrid(np.linspace(-6, 6, 300), np.linspace(-6, 6, 300))
+    dens = np.zeros_like(gx)
+    for (n, _), p in zip(A, PA):
+        w, s = (0.4, 0.45) if is_h(n) else (1.0, 0.6)
+        dens += w * np.exp(-((gx - p[0]) ** 2 + (gy - p[1]) ** 2) / (2 * s ** 2))
+    axes[0].contourf(gx, gy, dens, levels=12, cmap='Blues')
+    axes[0].scatter(PA[:, 0], PA[:, 1], s=6, color=INK)
+    titles = [f'QM: núcleos + elétrons', f'All-atom: {len(A)} átomos', f'United-atom: {len(U)} partículas',
+              f'Martini 3: {len(G)} beads']
+    # AA e UA: atomos e ligacoes
+    for ax, (rows, P) in zip(axes[1:3], ((A, PA), (U, PU))):
+        nm = [n for n, _ in rows]
+        cut = [1.25 if (is_h(nm[i]) or is_h(nm[j])) else 1.75 for i in range(len(P)) for j in range(len(P))]
+        for i, j in bonds(P, nm, 1.75):
+            lim = 1.25 if (is_h(nm[i]) or is_h(nm[j])) else 1.75
+            if np.linalg.norm(np.array([x for _, x in rows][i]) - np.array([x for _, x in rows][j])) < lim:
+                ax.plot(*P[[i, j]].T, color=INK, lw=1.2, zorder=1)
+        for (n, _), p in zip(rows, P):
+            ax.scatter(*p, s=40 if is_h(n) else 110, color=C[0] if is_h(n) else INK, zorder=2,
+                       edgecolor='white', lw=0.8)
+    # CG: beads com raio aproximado (R ~2,35 A, S ~2,05 A, T ~1,7 A)
+    for (n, _), p in zip(G, PG):
+        r = 2.35 if n == 'BB' else 2.05
+        axes[3].add_patch(Circle(p, r, color=C[1] if n == 'BB' else C[2], alpha=0.75, lw=0))
+        axes[3].text(*p, n, ha='center', va='center', fontsize=8, color='white')
+    axes[3].scatter(PA[[i for i, (n, _) in enumerate(A) if not is_h(n)], 0],
+                    PA[[i for i, (n, _) in enumerate(A) if not is_h(n)], 1], s=8, color=INK, zorder=3)
+    for ax, t in zip(axes, titles):
+        ax.set_xlim(-6, 6); ax.set_ylim(-6, 6); ax.set_aspect('equal'); frame_off(ax)
+        ax.set_title(t)
+    axes[1].scatter([], [], s=40, color=C[0], label='hidrogênio'); axes[1].scatter([], [], s=110, color=INK, label='átomo pesado')
+    axes[1].legend(loc='lower left', fontsize=8)
+    fig.suptitle('Fenilalanina 45 da ubiquitina em quatro resoluções (coordenadas reais; densidade QM esquemática)',
+                 y=0.93, fontsize=11)
+    save(fig, 'fund_resolucoes_molecula.png')
+
+
+# ---------------------------------------------------------------- 6. escalas de tamanho e tempo
+def fig_scales():
+    # ordens de grandeza tipicas: (nome, tamanho nm min-max, tempo ns min-max)
+    regions = [('QM', (0.1, 3), (1e-7, 1e-2)), ('All-atom', (1, 30), (1e-6, 1e4)),
+               ('United-atom', (1, 50), (1e-6, 1e4)), ('Coarse-grained', (3, 500), (1e-4, 1e6))]
+    fig, axes = plt.subplots(1, 2, figsize=(13, 3.6), sharey=True)
+    for k, (name, size, time) in enumerate(regions):
+        axes[0].barh(k, size[1] - size[0], left=size[0], color=C[k], height=0.55)
+        axes[1].barh(k, time[1] - time[0], left=time[0], color=C[k], height=0.55)
+    axes[0].set(xscale='log', xlim=(0.05, 2000), xlabel='Tamanho do sistema (nm)', title='Tamanho acessível',
+                yticks=range(len(regions)), yticklabels=[r[0] for r in regions])
+    axes[0].invert_yaxis()
+    events = [('vibração', 1e-5), ('cadeia lateral', 1e-1), ('alças', 1e1), ('bicamada', 1e2),
+              ('enovelamento', 1e4), ('fusão', 1e6)]
+    for lab, tt in events:
+        axes[1].axvline(tt, color=INK, lw=0.6, ls=(0, (3, 3)))
+        axes[1].text(tt, -0.75, lab, rotation=45, ha='left', va='bottom', fontsize=8, color=INK)
+    axes[1].set(xscale='log', xlim=(1e-7, 1e8), xlabel='Tempo acessível (ns)')
+    axes[1].set_title('Tempo acessível e processos', pad=70)
+    fig.suptitle('Alcance típico de cada resolução (ordens de grandeza)', y=1.12, fontsize=11)
+    fig.tight_layout()
+    save(fig, 'fund_escalas.png')
+
+
+# ---------------------------------------------------------------- 7. mapeamento e LJ
+def fig_mapping_lj():
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.4))
+    ax = axes[0]; rng = np.random.default_rng(7)
+    centers = np.array([[0, 0], [0.28, 0.05], [0.1, 0.27], [-0.18, 0.2]])
+    for c0 in centers:
+        ang = rng.uniform(0, 2 * np.pi)
+        h1 = c0 + 0.096 * np.array([np.cos(ang), np.sin(ang)])
+        h2 = c0 + 0.096 * np.array([np.cos(ang + 1.82), np.sin(ang + 1.82)])
+        for h in (h1, h2):
+            ax.plot(*np.array([c0, h]).T, color=INK, lw=1)
+            ax.add_patch(Circle(h, 0.03, color=C[0]))
+        ax.add_patch(Circle(c0, 0.055, color=INK))
+    com = centers.mean(0)
+    ax.add_patch(Circle(com, 0.235, fc=C[6], alpha=0.22, ec=C[6], lw=1.5))
+    ax.text(com[0], com[1] - 0.29, '1 bead W (σ = 0,47 nm)', ha='center', color=C[6])
+    ax.set_xlim(-0.5, 0.6); ax.set_ylim(-0.4, 0.5); ax.set_aspect('equal'); frame_off(ax)
+    ax.set_title('Mapeamento 4:1: quatro H₂O viram um bead W')
+    ax = axes[1]; r = np.linspace(0.25, 1.2, 500)
+    for (lab, s, e, col, ls) in (('O-O, TIP3P (σ 0,315 nm; ε 0,64 kJ/mol)', 0.315, 0.636, C[0], '-'),
+                                 ('W-W, Martini 3 (σ 0,47 nm; ε 4,65 kJ/mol)', 0.47, 4.65, C[6], (0, (6, 3)))):
+        ax.plot(r, 4 * e * ((s / r) ** 12 - (s / r) ** 6), color=col, ls=ls, label=lab)
+    ax.axhline(0, color=INK, lw=0.6)
+    ax.set(ylim=(-5.5, 5), xlabel='Distância (nm)', ylabel='U (kJ/mol)', title='Lennard-Jones: átomo × bead')
+    ax.legend(loc='lower right', fontsize=8)
+    save(fig, 'fund_mapeamento_lj.png')
+
+
+# ---------------------------------------------------------------- 8. paisagem 2D
+def landscape(x, y, rough):
+    base = 3 * (x ** 2 - 1) ** 2 + 2.5 * y ** 2
+    return base + rough * (0.8 * np.sin(9 * x) * np.cos(8 * y) + 0.5 * np.sin(17 * x + 1) * np.sin(15 * y))
+
+
+def fig_landscape_2d():
+    g = np.linspace(-1.7, 1.7, 300)
+    X, Y = np.meshgrid(g, g)
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4.3))
+    for ax, (name, rough) in zip(axes, (('All-atom', 1.0), ('United-atom', 0.55), ('Coarse-grained', 0.0))):
+        Z = landscape(X, Y, rough) * (0.6 if rough == 0 else 1)
+        cs = ax.contourf(X, Y, Z - Z.min(), levels=18, cmap='pure_r')
+        ax.contour(X, Y, Z - Z.min(), levels=18, colors='white', linewidths=0.3)
+        ax.set(title=name, xlabel='Coordenada 1', ylabel='Coordenada 2' if ax is axes[0] else None)
+        ax.set_aspect('equal')
+    fig.suptitle('Paisagem de energia livre (esquema ilustrativo): o CG integra a rugosidade e mantém os vales',
+                 y=1.03, fontsize=11)
+    save(fig, 'fund_paisagem_2d.png')
+
+
+# ---------------------------------------------------------------- 9. relogios diferentes (modelo de brinquedo)
+def fig_clocks():
+    """Dinamica de Langevin superamortecida em 1D: mesma barreira, rugosidade diferente."""
+    rng = np.random.default_rng(11)
+    kT, dt, n = 1.0, 2e-4, 400000
+
+    def U(x, rough):
+        return 3 * (x ** 2 - 1) ** 2 * (0.6 if rough == 0 else 1) + rough * (0.9 * np.sin(23 * x) + 0.6 * np.sin(41 * x + 1.3))
+
+    def dU(x, rough, h=1e-5):
+        return (U(x + h, rough) - U(x - h, rough)) / (2 * h)
+
+    def run(rough):
+        x = np.empty(n); x[0] = -1.0
+        noise = rng.standard_normal(n) * np.sqrt(2 * kT * dt)
+        for i in range(1, n):
+            x[i] = x[i - 1] - dU(x[i - 1], rough) * dt + noise[i]
+        return x
+
+    def crossings(x):
+        side = np.sign(x); side[side == 0] = 1
+        # conta transicoes entre os vales com histerese em +-0.6
+        state, c = -1, 0
+        for v in x:
+            if state < 0 and v > 0.6: state, c = 1, c + 1
+            elif state > 0 and v < -0.6: state, c = -1, c + 1
+        return c
+
+    xs = np.linspace(-1.7, 1.7, 600)
+    traj = {'All-atom (rugosa)': (1.0, C[0]), 'Coarse-grained (lisa)': (0.0, C[1])}
+    fig = plt.figure(figsize=(13, 6.2))
+    gs = fig.add_gridspec(2, 2, width_ratios=[1, 2.4], hspace=0.45, wspace=0.18)
+    for k, (name, (rough, col)) in enumerate(traj.items()):
+        axl = fig.add_subplot(gs[k, 0]); axr = fig.add_subplot(gs[k, 1])
+        u = U(xs, rough)
+        axl.plot(xs, u - u.min(), color=col)
+        axl.set(title=name, xlabel='x', ylabel='U / kT', ylim=(0, 8))
+        x = run(rough)
+        steps = np.arange(n)[::40]
+        axr.plot(steps, x[::40], color=col, lw=0.5)
+        axr.axhline(0, color=INK, lw=0.5, ls=(0, (4, 3)))
+        axr.set(ylabel='x', xlabel='Passos de integração' if k == 1 else None, ylim=(-1.8, 1.8),
+                title=f'{crossings(x)} travessias da barreira em {n:,} passos'.replace(',', ' '))
+    fig.suptitle('Mesmo número de passos, relógios diferentes (modelo de brinquedo, dinâmica de Langevin)',
+                 y=1.0, fontsize=11)
+    save(fig, 'fund_relogios.png')
+
+
+# ---------------------------------------------------------------- 10. mapeamento de varios residuos
+def fig_residue_mapping(aa, cg, picks=(('GLY', 10), ('ALA', 28), ('LEU', 8), ('LYS', 6), ('ARG', 42), ('PHE', 45), ('TYR', 59))):
+    fig, axes = plt.subplots(1, len(picks), figsize=(2.6 * len(picks), 3.6))
+    for ax, (name, resid) in zip(axes, picks):
+        A = [(n, x) for n, x in read_res(aa, resid, 'gro')]
+        G = read_res(cg, resid, 'pdb')
+        heavy = np.array([x for n, x in A if not n.startswith('H')])
+        PA, PG = project(A, heavy), project(G, heavy)
+        for (n, _), p in zip(G, PG):
+            ax.add_patch(Circle(p, 2.35 if n == 'BB' else 2.0, color=C[1] if n == 'BB' else C[2], alpha=0.35, lw=0))
+        for (n, _), p in zip(A, PA):
+            ax.scatter(*p, s=12 if n.startswith('H') else 34, color=C[0] if n.startswith('H') else INK, zorder=3, lw=0)
+        ax.set_xlim(-6.5, 6.5); ax.set_ylim(-5, 5); ax.set_aspect('equal'); frame_off(ax)
+        nh = sum(1 for n, _ in A if not n.startswith('H'))
+        ax.set_title(f'{name}{resid}\n{nh} pesados, {len(A)} átomos\n{len(G)} bead' + ('s' if len(G) > 1 else ''), fontsize=9)
+    fig.suptitle('Mapeamento Martini 3 de resíduos da ubiquitina: amarelo BB, magenta cadeia lateral', y=0.98, fontsize=11)
+    save(fig, 'fund_mapeamento_residuos.png')
+
+
+# ---------------------------------------------------------------- 11. minimizacao x dinamica
+def fig_em_vs_md():
+    rng = np.random.default_rng(5)
+    U = lambda x: 3 * (x ** 2 - 1) ** 2 + 0.9 * np.sin(23 * x) + 0.6 * np.sin(41 * x + 1.3)
+    dU = lambda x, h=1e-5: (U(x + h) - U(x - h)) / (2 * h)
+    xs = np.linspace(-1.7, 1.7, 800)
+    x0 = -0.35
+    em = [x0]
+    for _ in range(400):
+        em.append(em[-1] - 0.002 * dU(em[-1]))
+    md = [x0]
+    for _ in range(60000):
+        md.append(md[-1] - dU(md[-1]) * 2e-4 + rng.standard_normal() * np.sqrt(2 * 2e-4))
+    md = np.array(md)
+    fig, axes = plt.subplots(1, 2, figsize=(12, 3.8))
+    for ax in axes:
+        ax.plot(xs, U(xs) - U(xs).min(), color=INK, lw=1.2)
+        ax.set(xlabel='Coordenada', ylabel='U / kT', ylim=(-0.5, 9))
+    axes[0].plot(em, U(np.array(em)) - U(xs).min(), 'o', color=C[0], ms=3)
+    axes[0].annotate('para no mínimo\nlocal mais próximo', xy=(em[-1], U(em[-1]) - U(xs).min()), xytext=(0.4, 6),
+                     arrowprops=dict(arrowstyle='->', color=C[0]), color=C[0])
+    axes[0].set_title('Minimização (steepest descent): só desce')
+    h, edges = np.histogram(md, bins=80, range=(-1.7, 1.7))
+    axes[1].plot(md[::30], U(md[::30]) - U(xs).min(), '.', color=C[1], ms=2, alpha=0.4)
+    axes[1].set_title('Dinâmica a temperatura finita: visita vales e cruza barreiras')
+    fig.suptitle('Mesma paisagem, dois algoritmos (esquema ilustrativo)', y=1.04, fontsize=11)
+    save(fig, 'fund_minimizacao_vs_md.png')
+
+
+# ---------------------------------------------------------------- 12. custo teorico
+def fig_cost(V=295.5, n_w=2084, n_cg=2304, n_aa=1231, n_ua=762, n_ions=54):
+    rows = [('All-atom', n_aa + 12 * n_w + n_ions, 1.2, 2), ('United-atom', n_ua + 12 * n_w + n_ions, 1.4, 2),
+            ('Martini 3', n_cg, 1.1, 20)]
+    names = [r[0] for r in rows]
+    N = np.array([r[1] for r in rows]); rc = np.array([r[2] for r in rows]); dt = np.array([r[3] for r in rows])
+    nviz = N / V * 4 / 3 * np.pi * rc ** 3
+    steps = 1e6 / dt
+    cost = N * nviz * steps
+    fig, axes = plt.subplots(1, 4, figsize=(15, 3.4), sharey=True)
+    for ax, vals, title in zip(axes, (N, nviz, steps, cost / cost[-1]),
+                               ('Partículas', 'Vizinhos no cutoff', 'Passos por ns', 'Custo por ns ÷ Martini')):
+        ax.barh(names, vals, color=C[0], height=0.55)
+        ax.set_xscale('log'); ax.set_title(title)
+        for i, v in enumerate(vals):
+            ax.text(v * 1.15, i, f'{v:,.0f}'.replace(',', ' '), va='center', fontsize=8, color=INK)
+        ax.set_xlim(vals.min() / 3, vals.max() * 8)
+    axes[0].invert_yaxis()
+    fig.suptitle('Custo teórico da ubiquitina solvatada: os três fatores se multiplicam', y=1.05, fontsize=11)
+    fig.tight_layout()
+    save(fig, 'fund_custo_teorico.png')
+
+
+# ---------------------------------------------------------------- 13. automontagem em quadros
+def fig_self_assembly(xtc, gro, times=(0, 2, 5, 8, 15)):
+    import mdtraj as md
+    t = md.load(xtc, top=gro)
+    top = t.topology
+    sel = {'cabeças': top.select('name NC3 PO4'), 'caudas': top.select('name =~ "C[1-4][AB]"')}
+    fig, axes = plt.subplots(1, len(times), figsize=(3.1 * len(times), 3.4))
+    for ax, tn in zip(axes, times):
+        i = int(np.argmin(np.abs(t.time / 1000 - tn)))
+        L = t.unitcell_lengths[i]
+        xyz = t.xyz[i] % L
+        ax.scatter(xyz[sel['caudas'], 0], xyz[sel['caudas'], 2], s=3, color=palette.tokens('light')['secondary'], lw=0)
+        ax.scatter(xyz[sel['cabeças'], 0], xyz[sel['cabeças'], 2], s=6, color=C[0], lw=0)
+        ax.add_patch(Rectangle((0, 0), L[0], L[2], fill=False, ec=INK, lw=0.8))
+        ax.set_xlim(-0.2, L[0] + 0.2); ax.set_ylim(-0.2, L[2] + 0.2); ax.set_aspect('equal'); frame_off(ax)
+        ax.set_title(f'{t.time[i] / 1000:.0f} ns')
+    fig.suptitle('Automontagem de 128 DSPC (simulação real, projeção x-z): cabeças em azul, caudas em cinza', y=1.04, fontsize=11)
+    save(fig, 'fund_automontagem_quadros.png')
+
+
+# ---------------------------------------------------------------- 14. funil de energia
+def fig_funnel():
+    """Funil de enovelamento em 4 resolucoes (esquema ilustrativo, superficies analiticas)."""
+    r = np.linspace(0, 1, 120); th = np.linspace(0, 2 * np.pi, 160)
+    R, T = np.meshgrid(r, th)
+    X, Y = R * np.cos(T), R * np.sin(T)
+    base = 6 * R ** 1.4                                   # funil: energia cai rumo ao nativo (centro)
+    rough = lambda a, k: a * (np.sin(k * R * 6) * np.cos(5 * T) + 0.6 * np.sin(k * 11 * R + 3 * T))
+    panels = [('QM', base + rough(1.0, 1.0), 'mesma superfície, mais exata;\nacessível só na região em destaque'),
+              ('All-atom', base + rough(1.0, 1.0), 'rugosa: muitos mínimos locais'),
+              ('United-atom', base + rough(0.55, 0.9), 'rugosidade menor'),
+              ('Martini 3 + rede elástica', 40 * R ** 2, 'poço único em torno da estrutura\ninicial: sem enovelamento')]
+    fig = plt.figure(figsize=(16, 4.6))
+    for k, (name, Z, note) in enumerate(panels):
+        ax = fig.add_subplot(1, 4, k + 1, projection='3d')
+        Zp = np.where(Z <= 8, Z, np.nan)
+        fc = plt.get_cmap('pure_r')(np.clip(np.nan_to_num(Zp, nan=8) / 8, 0, 1))
+        if name == 'QM':
+            fc[R < 0.3] = matplotlib.colors.to_rgba(C[1])   # regiao acessivel ao QM
+        ax.plot_surface(X, Y, Zp, facecolors=fc, linewidth=0, antialiased=True, rstride=2, cstride=2, shade=True)
+        ax.set_zlim(0, 8); ax.set_xticks([]); ax.set_yticks([]); ax.set_zticks([])
+        ax.set_zlabel('Energia livre', labelpad=-8, fontsize=9)
+        ax.view_init(elev=24, azim=-60)
+        ax.set_title(name, pad=0)
+        ax.text2D(0.5, -0.04, note, transform=ax.transAxes, ha='center', va='top', fontsize=8.5, color=INK)
+    fig.suptitle('Funil de energia do enovelamento em quatro resoluções (esquema ilustrativo). '
+                 'Largura: número de conformações; profundidade: estabilidade', y=0.92, fontsize=11)
+    save(fig, 'fund_funil.png')
+
+
+def main():
+    ap = argparse.ArgumentParser(description='Gera imagens/fund_*.png')
+    ap.add_argument('--aa', required=True); ap.add_argument('--ua', required=True); ap.add_argument('--cg', required=True)
+    ap.add_argument('--mem-xtc'); ap.add_argument('--mem-gro')
+    a = ap.parse_args()
+    OUT.mkdir(exist_ok=True)
+    fig_md_loop(); fig_force_field(); fig_timestep(); fig_pbc()
+    fig_resolutions(a.aa, a.ua, a.cg); fig_scales(); fig_mapping_lj(); fig_landscape_2d(); fig_clocks()
+    fig_residue_mapping(a.aa, a.cg); fig_em_vs_md(); fig_cost(); fig_funnel()
+    if a.mem_xtc:
+        fig_self_assembly(a.mem_xtc, a.mem_gro)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,18 @@
+title                    = Martini 3 energy minimization
+integrator               = steep
+emtol                    = 1000.0           ; stop when Fmax < 1000 kJ/mol/nm
+emstep                   = 0.01
+nsteps                   = 5000
+nstenergy                = 10
+; Martini 3 nonbonded settings
+cutoff-scheme            = Verlet
+nstlist                  = 20
+pbc                      = xyz
+verlet-buffer-tolerance  = 0.005
+coulombtype              = reaction-field
+rcoulomb                 = 1.1
+epsilon_r                = 15               ; relative dielectric constant (implicit screening)
+epsilon_rf               = 0                ; infinite dielectric beyond the cutoff
+vdw_type                 = cutoff
+vdw-modifier             = Potential-shift-verlet
+rvdw                     = 1.1

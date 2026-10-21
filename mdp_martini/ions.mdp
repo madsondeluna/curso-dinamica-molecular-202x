@@ -1,0 +1,15 @@
+title                    = Martini 3 genion input
+integrator               = steep
+nsteps                   = 0
+; Martini 3 nonbonded settings
+cutoff-scheme            = Verlet
+nstlist                  = 20
+pbc                      = xyz
+verlet-buffer-tolerance  = 0.005
+coulombtype              = reaction-field
+rcoulomb                 = 1.1
+epsilon_r                = 15               ; relative dielectric constant (implicit screening)
+epsilon_rf               = 0                ; infinite dielectric beyond the cutoff
+vdw_type                 = cutoff
+vdw-modifier             = Potential-shift-verlet
+rvdw                     = 1.1
