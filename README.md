@@ -7,12 +7,15 @@ Material de aula executável no Google Colab: uma proteína e uma membrana que s
 | `MD_Martini.ipynb` | coarse-grained, Martini 3 | ubiquitina (1UBQ) em água; automontagem de bicamada de DSPC | <a href="https://colab.research.google.com/github/madsondeluna/curso-dinamica-molecular-202x/blob/main/MD_Martini.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
 
 
-**Autoria:** Madson A. de Luna-Aragão, MSc
-
-- Programa Interunidades de Pós-Graduação em Bioinformática, Universidade Federal de Minas Gerais (UFMG), Brasil
-- CNRS, Institut de Biologie et Chimie des Protéines (IBCP), Lyon, França
-
-[madsondeluna@gmail.com](mailto:madsondeluna@gmail.com) · [madsondeluna.com](https://madsondeluna.com) · [GitHub](https://github.com/madsondeluna) · [LinkedIn](https://www.linkedin.com/in/madsonaragao/)
+| Autoria | |
+|---|---|
+| Autor | **Madson A. de Luna-Aragão**, MSc |
+| Vínculos | Programa Interunidades de Pós-Graduação em Bioinformática, Universidade Federal de Minas Gerais (UFMG), Belo Horizonte, Brasil<br>CNRS, Institut de Biologie et Chimie des Protéines (IBCP), Lyon, França |
+| E-mail | [madsondeluna@gmail.com](mailto:madsondeluna@gmail.com) |
+| Site | [madsondeluna.com](https://madsondeluna.com) |
+| GitHub | [github.com/madsondeluna](https://github.com/madsondeluna) |
+| LinkedIn | [linkedin.com/in/madsonaragao](https://www.linkedin.com/in/madsonaragao/) |
+| Repositório | [madsondeluna/curso-dinamica-molecular-202x](https://github.com/madsondeluna/curso-dinamica-molecular-202x) |
 
 ## Índice
 
@@ -526,12 +529,15 @@ rvdw                     = 1.1
 
 ## Autoria
 
-Madson A. de Luna-Aragão, MSc
-
-- Programa Interunidades de Pós-Graduação em Bioinformática, Universidade Federal de Minas Gerais (UFMG), Brasil
-- CNRS, Institut de Biologie et Chimie des Protéines (IBCP), Lyon, França
-
-[madsondeluna@gmail.com](mailto:madsondeluna@gmail.com) · [madsondeluna.com](https://madsondeluna.com) · [GitHub](https://github.com/madsondeluna) · [LinkedIn](https://www.linkedin.com/in/madsonaragao/)
+| | |
+|---|---|
+| Autor | **Madson A. de Luna-Aragão**, MSc |
+| Vínculos | Programa Interunidades de Pós-Graduação em Bioinformática, Universidade Federal de Minas Gerais (UFMG), Belo Horizonte, Brasil<br>CNRS, Institut de Biologie et Chimie des Protéines (IBCP), Lyon, França |
+| E-mail | [madsondeluna@gmail.com](mailto:madsondeluna@gmail.com) |
+| Site | [madsondeluna.com](https://madsondeluna.com) |
+| GitHub | [github.com/madsondeluna](https://github.com/madsondeluna) |
+| LinkedIn | [linkedin.com/in/madsonaragao](https://www.linkedin.com/in/madsonaragao/) |
+| Repositório | [madsondeluna/curso-dinamica-molecular-202x](https://github.com/madsondeluna/curso-dinamica-molecular-202x) |
 
 ## Licença
 
