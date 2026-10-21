@@ -53,7 +53,7 @@ md('''
 md('''
 ## Antes de começar: ambiente limpo e sessão ativa
 
-Execute as três células abaixo **antes de qualquer outra coisa**. A primeira reinicia o ambiente sozinha se ele já tiver sido usado: a execução para com a mensagem *Ambiente reiniciado* (o Colab pode avisar que a sessão travou, é esperado). Nesse caso, rode **Ambiente de execução > Executar tudo** de novo. Os arquivos ficam em `/content/aula_martini/repN`. Só para simular do zero (`USE_PRECOMPUTED = False`) o notebook monta o Google Drive e grava em `MyDrive/aula_martini/repN`, para retomar do último checkpoint se a sessão cair.
+Execute as três células abaixo **antes de qualquer outra coisa**. A primeira reinicia o ambiente sozinha se ele já tiver sido usado: a execução para com a mensagem *Ambiente reiniciado* (o Colab pode avisar que a sessão travou, é esperado). Nesse caso, rode **Ambiente de execução > Executar tudo** de novo. Tudo vem do GitHub e os arquivos ficam em `/content/aula_martini/repN`, apagados quando a sessão termina.
 
 **GPU.** Para simular do zero (`USE_PRECOMPUTED = False`), escolha **Ambiente de execução > Alterar o tipo de ambiente de execução > T4 GPU** antes de executar. O notebook detecta a GPU e a usa no `mdrun` quando o GROMACS instalado tem suporte; sem GPU, ou sem suporte, a simulação roda na CPU. Com a réplica pré-computada, a GPU não faz diferença.
 
@@ -66,7 +66,7 @@ Execute as três células abaixo **antes de qualquer outra coisa**. A primeira r
 code('''
 # Reinicio limpo: se esta celula ja rodou neste ambiente, reinicia o Python antes de recomecar.
 # Variaveis e modulos de uma execucao anterior causam erros ao recomecar do inicio.
-# Os arquivos em /content e no Drive continuam la; so a memoria do Python e limpa.
+# Os arquivos em /content continuam la; so a memoria do Python e limpa.
 import os, sys, threading
 if 'google.colab' in sys.modules and globals().get('_AULA_INICIADA'):
     # o erro abaixo interrompe o "Executar tudo"; 1 s depois o processo sai e o Colab sobe um ambiente novo
@@ -95,20 +95,10 @@ code('''
 REPLICA = 1              # 1, 2 ou 3: cada grupo usa uma replica diferente
 USE_PRECOMPUTED = True   # True: baixa a replica ja simulada do GitHub; False: simula tudo do zero
 
-# Diretorio de trabalho. O Google Drive so e montado para simular do zero:
-# a corrida leva horas, e o Drive guarda checkpoints se a sessao cair.
-# Com a replica pre-computada, tudo fica em /content e baixa de novo em segundos.
+# Diretorio de trabalho: tudo vem do GitHub e fica em /content durante a sessao
 import os
 
 BASE_DIR = '/content/aula_martini' if os.path.isdir('/content') else os.path.abspath('aula_martini')
-if not USE_PRECOMPUTED:
-    try:
-        from google.colab import drive
-        drive.mount('/content/drive')
-        BASE_DIR = '/content/drive/MyDrive/aula_martini'
-        print('Google Drive montado: a simulacao continua de onde parou se a sessao cair.')
-    except Exception:
-        print('Drive nao montado: arquivos nao persistem apos a sessao.')
 WORK_DIR = os.path.join(BASE_DIR, f'rep{REPLICA}')
 os.makedirs(WORK_DIR, exist_ok=True)
 os.chdir(WORK_DIR)
@@ -288,7 +278,7 @@ if not cached(['water.gro'], 'caixa de agua W'):
     os.system('wget -q https://cgmartini-library.s3.ca-central-1.amazonaws.com/1_Downloads/example_applications/solvent_systems/water.gro')
 
 # Replica ja simulada: o pacote traz as saidas de todas as etapas
-# a lista inclui os arquivos das versoes mais novas do pacote: uma copia antiga no Drive e baixada de novo
+# a lista inclui os arquivos das versoes mais novas do pacote: uma copia antiga e baixada de novo
 PACOTE = ['summary.json', 'md_prot_pbc.xtc', 'mem_whole.xtc']
 if USE_PRECOMPUTED and not cached(PACOTE, f'replica {REPLICA} pre-computada'):
     os.system(f'wget -q {REPO}/results/rep{REPLICA}.tar.gz -O rep.tar.gz && tar xzf rep.tar.gz && rm rep.tar.gz')
@@ -820,7 +810,7 @@ md('''
 
 Restrições removidas, passo de 20 fs: 750 000 passos.
 
-> **Tempo de execução estimado no Colab:** 45 a 75 minutos. Com o Drive montado, a simulação é retomada do último checkpoint se a sessão cair.
+> **Tempo de execução estimado no Colab:** 45 a 75 minutos. Se a célula for interrompida com a sessão ainda ativa, executá-la de novo retoma do último checkpoint.
 
 **Na aula:** por que o Martini usa 20 fs e o all-atom 2 fs.
 
@@ -1113,7 +1103,7 @@ O acoplamento de pressão é **isotrópico**: ainda não há bicamada, logo não
 
 > **Duração:** o tutorial oficial usa 30 ns. Este notebook usa 15 ns; a seção de réplicas mostra quanto o tempo de formação varia entre sementes.
 >
-> **Tempo de execução estimado no Colab:** 45 a 75 minutos. Com o Drive montado, a simulação é retomada do último checkpoint se a sessão cair: basta executar a célula de novo.
+> **Tempo de execução estimado no Colab:** 45 a 75 minutos. Se a célula for interrompida com a sessão ainda ativa, executá-la de novo retoma do último checkpoint.
 
 **Na aula:** o relógio do Martini anda mais rápido que o físico, porque a paisagem é mais lisa.
 
@@ -1438,7 +1428,7 @@ O inverso também é um problema: com `-1` o GROMACS sorteia uma semente nova, m
 
 **Onde a independência começa:** as velocidades são sorteadas na primeira etapa de dinâmica (aqui, o NPT da Parte A e a automontagem da Parte B). Etapas com `gen_vel = no` herdam as velocidades do checkpoint. Para uma réplica nova, refaça a partir dessa etapa, não só a produção.
 
-**Como gerar uma réplica:** crie uma pasta por réplica (por exemplo `MyDrive/aula_martini_rep2`), troque `WORK_DIR` na segunda célula e execute o notebook. Cada pasta terá o próprio `seeds.json`. **Para reproduzir uma corrida exata:** copie os valores de `seeds.json` para `gen_seed` e `ld_seed` nos `.mdp` e para o `-seed` das ferramentas.
+**Como gerar uma réplica:** troque `REPLICA` na segunda célula (cada réplica tem a própria pasta `/content/aula_martini/repN`) e execute o notebook. Cada pasta terá o próprio `seeds.json`. **Para reproduzir uma corrida exata:** copie os valores de `seeds.json` para `gen_seed` e `ld_seed` nos `.mdp` e para o `-seed` das ferramentas.
 ''')
 
 code('''

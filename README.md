@@ -50,7 +50,7 @@ Material de aula executável no Google Colab: uma proteína e uma membrana que s
 
 ## Como usar no Google Colab
 
-Requisitos: conta Google e navegador. Nada é instalado no computador. Clique no botão do notebook, faça login e execute as células em ordem (`Shift + Enter`). As primeiras células reiniciam o ambiente se ele já tiver sido usado e mantêm a sessão ativa. O Google Drive só é montado para simular do zero (`USE_PRECOMPUTED = False`).
+Requisitos: conta Google e navegador. Nada é instalado no computador. Clique no botão do notebook, faça login e execute as células em ordem (`Shift + Enter`). As primeiras células reiniciam o ambiente se ele já tiver sido usado e mantêm a sessão ativa. Tudo vem do GitHub: não é preciso montar o Google Drive.
 
 O Colab baixa tudo deste repositório público: parâmetros, visualizadores, as três réplicas já simuladas e as imagens.
 
@@ -58,7 +58,7 @@ Parâmetros na segunda célula de `MD_Martini.ipynb`:
 
 | Parâmetro | Padrão | Efeito |
 |-----------|--------|--------|
-| `REPLICA` | `1` | réplica usada (1, 2 ou 3); pasta `/content/aula_martini/repN` (`MyDrive/aula_martini/repN` ao simular do zero) |
+| `REPLICA` | `1` | réplica usada (1, 2 ou 3); pasta `/content/aula_martini/repN` |
 | `USE_PRECOMPUTED` | `True` | baixa `results/repN.tar.gz`: todas as etapas aparecem como concluídas e os cartões, gráficos e visualizações 3D saem em poucos minutos |
 
 | Notebook | Modo | Tempo no Colab gratuito |
@@ -66,7 +66,7 @@ Parâmetros na segunda célula de `MD_Martini.ipynb`:
 | `MD_Martini.ipynb` | `USE_PRECOMPUTED = True` | 5 a 10 min (instalação, download e análises) |
 | `MD_Martini.ipynb` | `USE_PRECOMPUTED = False` | 1,5 a 2,5 h (Parte A: 15 ns; Parte B: 15 + 5 ns) |
 
-Ao reabrir com o Drive montado, cada etapa concluída é reaproveitada e uma simulação interrompida continua do último checkpoint. Uma etapa de MD só conta como concluída quando o `.gro` final existe.
+Dentro da mesma sessão, cada etapa concluída é reaproveitada e uma simulação interrompida continua do último checkpoint; os arquivos são apagados quando a sessão do Colab termina. Uma etapa de MD só conta como concluída quando o `.gro` final existe.
 
 
 ## 1. O que a dinâmica molecular faz
