@@ -315,22 +315,25 @@ def fig_mapping_lj():
 
 
 # ---------------------------------------------------------------- 8. paisagem 2D
-def landscape(x, y, rough):
+def landscape(x, y, rough, fine=0.0):
     base = 3 * (x ** 2 - 1) ** 2 + 2.5 * y ** 2
-    return base + rough * (0.8 * np.sin(9 * x) * np.cos(8 * y) + 0.5 * np.sin(17 * x + 1) * np.sin(15 * y))
+    return (base + rough * (0.8 * np.sin(9 * x) * np.cos(8 * y) + 0.5 * np.sin(17 * x + 1) * np.sin(15 * y))
+            + fine * (0.45 * np.sin(29 * x + 0.5) * np.cos(27 * y) + 0.3 * np.sin(41 * x) * np.sin(37 * y + 1)))
 
 
 def fig_landscape_2d():
     g = np.linspace(-1.7, 1.7, 300)
     X, Y = np.meshgrid(g, g)
-    fig, axes = plt.subplots(1, 3, figsize=(14, 4.3))
-    for ax, (name, rough) in zip(axes, (('All-atom', 1.0), ('United-atom', 0.55), ('Coarse-grained', 0.0))):
-        Z = landscape(X, Y, rough) * (0.6 if rough == 0 else 1)
+    fig, axes = plt.subplots(1, 4, figsize=(18, 4.4))
+    panels = (('QM', 1.0, 1.0), ('All-atom', 1.0, 0.0), ('United-atom', 0.55, 0.0), ('Coarse-grained', 0.0, 0.0))
+    for ax, (name, rough, fine) in zip(axes, panels):
+        Z = landscape(X, Y, rough, fine) * (0.6 if rough == 0 else 1)
         cs = ax.contourf(X, Y, Z - Z.min(), levels=18, cmap='pure_r')
         ax.contour(X, Y, Z - Z.min(), levels=18, colors='white', linewidths=0.3)
         ax.set(title=name, xlabel='Coordenada 1', ylabel='Coordenada 2' if ax is axes[0] else None)
         ax.set_aspect('equal')
-    fig.suptitle('Paisagem de energia livre (esquema ilustrativo): o CG integra a rugosidade e mantém os vales',
+    fig.suptitle('Paisagem de energia livre em quatro resoluções (esquema ilustrativo): '
+                 'a QM resolve os elétrons e é a mais rugosa; o CG integra a rugosidade e mantém os vales',
                  y=1.03, fontsize=11)
     save(fig, 'fund_paisagem_2d.png')
 
@@ -341,17 +344,18 @@ def fig_clocks():
     rng = np.random.default_rng(11)
     kT, dt, n = 1.0, 2e-4, 400000
 
-    def U(x, rough):
-        return 3 * (x ** 2 - 1) ** 2 * (0.6 if rough == 0 else 1) + rough * (0.9 * np.sin(23 * x) + 0.6 * np.sin(41 * x + 1.3))
+    def U(x, rough, fine=0.0):
+        return (3 * (x ** 2 - 1) ** 2 * (0.6 if rough == 0 else 1) + rough * (0.9 * np.sin(23 * x) + 0.6 * np.sin(41 * x + 1.3))
+                + fine * (0.5 * np.sin(67 * x + 0.7) + 0.4 * np.sin(89 * x + 2.1)))
 
-    def dU(x, rough, h=1e-5):
-        return (U(x + h, rough) - U(x - h, rough)) / (2 * h)
+    def dU(x, rough, fine, h=1e-5):
+        return (U(x + h, rough, fine) - U(x - h, rough, fine)) / (2 * h)
 
-    def run(rough):
+    def run(rough, fine):
         x = np.empty(n); x[0] = -1.0
         noise = rng.standard_normal(n) * np.sqrt(2 * kT * dt)
         for i in range(1, n):
-            x[i] = x[i - 1] - dU(x[i - 1], rough) * dt + noise[i]
+            x[i] = x[i - 1] - dU(x[i - 1], rough, fine) * dt + noise[i]
         return x
 
     def crossings(x):
@@ -364,19 +368,20 @@ def fig_clocks():
         return c
 
     xs = np.linspace(-1.7, 1.7, 600)
-    traj = {'All-atom (rugosa)': (1.0, C[0]), 'Coarse-grained (lisa)': (0.0, C[1])}
-    fig = plt.figure(figsize=(13, 6.2))
-    gs = fig.add_gridspec(2, 2, width_ratios=[1, 2.4], hspace=0.45, wspace=0.18)
-    for k, (name, (rough, col)) in enumerate(traj.items()):
+    traj = {'QM (a mais rugosa)': (1.0, 1.0, C[2]), 'All-atom (rugosa)': (1.0, 0.0, C[0]),
+            'Coarse-grained (lisa)': (0.0, 0.0, C[1])}
+    fig = plt.figure(figsize=(13, 9.0))
+    gs = fig.add_gridspec(3, 2, width_ratios=[1, 2.4], hspace=0.55, wspace=0.18)
+    for k, (name, (rough, fine, col)) in enumerate(traj.items()):
         axl = fig.add_subplot(gs[k, 0]); axr = fig.add_subplot(gs[k, 1])
-        u = U(xs, rough)
+        u = U(xs, rough, fine)
         axl.plot(xs, u - u.min(), color=col)
         axl.set(title=name, xlabel='x', ylabel='U / kT', ylim=(0, 8))
-        x = run(rough)
+        x = run(rough, fine)
         steps = np.arange(n)[::40]
         axr.plot(steps, x[::40], color=col, lw=0.5)
         axr.axhline(0, color=INK, lw=0.5, ls=(0, (4, 3)))
-        axr.set(ylabel='x', xlabel='Passos de integração' if k == 1 else None, ylim=(-1.8, 1.8),
+        axr.set(ylabel='x', xlabel='Passos de integração' if k == len(traj) - 1 else None, ylim=(-1.8, 1.8),
                 title=f'{crossings(x)} travessias da barreira em {n:,} passos'.replace(',', ' '))
     fig.suptitle('Mesmo número de passos, relógios diferentes (modelo de brinquedo, dinâmica de Langevin)',
                  y=1.0, fontsize=11)

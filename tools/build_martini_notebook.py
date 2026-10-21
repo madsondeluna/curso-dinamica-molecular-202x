@@ -430,6 +430,8 @@ A simulação caminha sobre uma paisagem de energia livre: passa a maior parte d
 
 ![Paisagem 2D](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_paisagem_2d.png)
 
+A QM, à esquerda, tem os mesmos vales do all-atom e uma rugosidade ainda mais fina, vinda dos elétrons (polarização, transferência de carga).
+
 No enovelamento, a paisagem tem forma de funil: larga em cima (muitas conformações desenoveladas) e estreita no fundo (o estado nativo). A rede elástica do Martini troca o funil por um poço único: a proteína fica perto da estrutura inicial e não enovela nem desenovela.
 
 ![Funil de energia](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_funil.png)
@@ -445,6 +447,8 @@ md('''
 Numa paisagem lisa, a mesma barreira é cruzada mais vezes no mesmo número de passos. Isso significa que **1 ns de Martini não equivale a 1 ns de all-atom**: o relógio da simulação CG anda mais rápido que o relógio físico. Para a água, Marrink *et al.* (2007) estimaram um fator de cerca de 4, mas o fator muda de processo para processo. Por isso, compare resoluções diferentes por eventos (formação da bicamada, contatos, estados visitados) e não por nanossegundos.
 
 ![Relógios diferentes](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_relogios.png)
+
+No modelo de brinquedo, QM e all-atom cruzam a barreira o mesmo número de vezes (9 em 400 000 passos) e o CG, 19: a rugosidade extra da QM é fina e pequena perto de kT. A diferença da QM está no custo de cada passo, que resolve os elétrons.
 ''')
 
 md('''
@@ -1116,6 +1120,8 @@ O acoplamento de pressão é **isotrópico**: ainda não há bicamada, logo não
 **Na aula:** o relógio do Martini anda mais rápido que o físico, porque a paisagem é mais lisa.
 
 ![Relógios diferentes](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_relogios.png)
+
+No modelo de brinquedo, QM e all-atom cruzam a barreira o mesmo número de vezes (9 em 400 000 passos) e o CG, 19: a rugosidade extra da QM é fina e pequena perto de kT. A diferença da QM está no custo de cada passo, que resolve os elétrons.
 ''')
 
 code('''
@@ -1153,6 +1159,8 @@ $$Q = \\left\\langle \\tfrac{3}{2}\\,\\hat{u}\\hat{u}^T - \\tfrac{1}{2} I \\righ
 e $S$ é o seu maior autovalor. Com orientações aleatórias, $S$ fica perto de 0,2 (e não de 0: o maior autovalor de uma amostra finita de 128 vetores é sempre positivo); com todos os lipídios alinhados, $S \\to 1$. O autovetor correspondente é a normal da bicamada, encontrada sem supor em qual eixo ela se formou.
 
 ![Paisagem 2D](https://raw.githubusercontent.com/madsondeluna/curso-dinamica-molecular-202x/main/imagens/fund_paisagem_2d.png)
+
+A QM, à esquerda, tem os mesmos vales do all-atom e uma rugosidade ainda mais fina, vinda dos elétrons (polarização, transferência de carga).
 ''')
 
 code('''

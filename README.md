@@ -137,6 +137,8 @@ A simulação caminha sobre uma paisagem de energia livre: passa a maior parte d
 
 ![Paisagem 2D](imagens/fund_paisagem_2d.png)
 
+A QM, à esquerda, tem os mesmos vales do all-atom e uma rugosidade ainda mais fina, vinda dos elétrons (polarização, transferência de carga).
+
 | Resolução | Forma da paisagem |
 |-----------|-------------------|
 | QM | superfície de referência, rugosa; acessível só perto de um mínimo |
@@ -156,6 +158,8 @@ A mesma ideia em uma dimensão: a coordenada de reação nas quatro resoluções
 Numa paisagem lisa, a mesma barreira é cruzada mais vezes no mesmo número de passos: **1 ns de Martini não equivale a 1 ns de all-atom**. Para a água, Marrink *et al.* (2007) estimaram um fator de cerca de 4, mas o fator muda de processo para processo. Comparações entre resoluções usam eventos (formação da bicamada, contatos, estados visitados), não nanossegundos.
 
 ![Relógios diferentes](imagens/fund_relogios.png)
+
+No modelo de brinquedo, QM e all-atom cruzam a barreira o mesmo número de vezes (9 em 400 000 passos) e o CG, 19: a rugosidade extra da QM é fina e pequena perto de kT. A diferença da QM está no custo de cada passo, que resolve os elétrons.
 
 | Consequência no CG | Efeito |
 |--------------------|--------|
