@@ -25,6 +25,7 @@ Material didático e notebook para o Google Colab sobre dinâmica molecular em r
 - [1. O que a dinâmica molecular faz](#1-o-que-a-dinâmica-molecular-faz)
 - [2. Quatro resoluções: QM, all-atom, united-atom e coarse-grained](#2-quatro-resoluções-qm-all-atom-united-atom-e-coarse-grained)
 - [3. Paisagem energética](#3-paisagem-energética)
+- [Mutações pontuais: p53 e câncer](#mutações-pontuais-p53-e-câncer)
 - [4. Quanto custa cada resolução](#4-quanto-custa-cada-resolução)
 - [5. Parte A: ubiquitina em Martini 3](#5-parte-a-ubiquitina-em-martini-3)
 - [6. Parte B: automontagem de uma bicamada](#6-parte-b-automontagem-de-uma-bicamada)
@@ -101,6 +102,12 @@ Minimizar e simular são coisas diferentes: a minimização desce até o mínimo
 
 ![Minimização e dinâmica](imagens/fund_minimizacao_vs_md.png)
 
+**Analogia: fotografia e filme.** Uma estrutura do PDB, obtida por cristalografia ou crio-EM, é uma fotografia: mostra uma conformação congelada. A MD é o filme: mostra como a proteína se move em torno dessa conformação, e uma região fechada na fotografia pode se abrir em alguns quadros.
+
+![Fotografia e filme](imagens/fund_foto_filme.png)
+
+**Exemplo: integrase do HIV.** Simulações da integrase do HIV mostraram um sulco ao lado do sítio ativo que não aparecia nas estruturas cristalográficas (Schames *et al.*, 2004). Esse sulco orientou o desenvolvimento do raltegravir, o primeiro inibidor de integrase aprovado pela FDA (Durrant e McCammon, 2011).
+
 
 ## 2. Quatro resoluções: QM, all-atom, united-atom e coarse-grained
 
@@ -131,6 +138,19 @@ Quatro moléculas de água viram um bead W. O bead é maior que um átomo (σ = 
 | Membranas, automontagem, agregação, sistemas grandes | coarse-grained |
 
 ![Escalas de tamanho e tempo](imagens/fund_escalas.png)
+
+**Analogia: mapas em escalas diferentes.** Um mapa de rua mostra cada casa; o de cidade mostra só os bairros. Nenhum é melhor: cada um responde a uma pergunta. A resolução da simulação se escolhe pela pergunta:
+
+| Pergunta | Resolução mínima | Motivo |
+|----------|------------------|--------|
+| Como a enzima quebra a ligação do substrato? | QM, ou QM/MM | ligações se formam e se quebram; Warshel e Levitt (1976) acoplaram QM e mecânica clássica para a lisozima |
+| Por que a troca de um resíduo altera a proteína? | all-atom | o efeito depende de cadeias laterais, ligações de hidrogênio e água |
+| Como uma proteína se acomoda numa membrana grande? | coarse-grained | milhares de lipídios por microssegundos |
+| Como lipídios dispersos formam uma bicamada? | coarse-grained | a automontagem leva dezenas de ns no Martini (Parte B) |
+
+**Exemplo: anemia falciforme.** A troca de um único resíduo na cadeia β da hemoglobina, ácido glutâmico por valina na posição 6 (Ingram, 1957), põe um resíduo hidrofóbico na superfície da proteína. Na hemoglobina desoxigenada, essa valina se encaixa num bolsão hidrofóbico de outra molécula, as hemoglobinas se encadeiam em fibras e a hemácia se deforma em foice. Para ver a diferença entre Glu e Val é preciso detalhe atômico: no Martini, as duas cadeias laterais são um bead cada, de tipos diferentes, sem a geometria do encaixe.
+
+![Anemia falciforme](imagens/fund_falciforme.png)
 
 
 ## 3. Paisagem energética
@@ -171,6 +191,44 @@ Com o mesmo ruído térmico nas quatro paisagens, as travessias da barreira em 1
 | Rede elástica | sem enovelamento nem troca de estrutura secundária |
 
 
+**Analogia: uma bolinha no relevo.** A proteína é uma bolinha agitada pela temperatura num relevo de vales e morros. Os vales são conformações estáveis; para mudar de vale, a bolinha precisa de um chute térmico maior que o morro entre eles. Uma mutação muda o relevo: pode deixar o vale nativo raso ou aprofundar um vale errado.
+
+![Paisagem e doenças de enovelamento](imagens/fund_paisagem_doenca.png)
+
+**Exemplo: doenças de enovelamento.** Na fibrose cística, a deleção da fenilalanina 508 da proteína CFTR (ΔF508) está em cerca de 70% dos cromossomos com a doença (Kerem *et al.*, 1989; Riordan *et al.*, 1989). A proteína mutante não completa o enovelamento e é degradada antes de chegar à membrana (Cheng *et al.*, 1990). No Alzheimer e em outras amiloidoses, peptídeos e proteínas caem num vale diferente do nativo, o agregado amiloide (Chiti e Dobson, 2017). Nas doenças por príons, a forma mal enovelada converte as cópias normais da proteína à sua própria forma (Prusiner, 1998).
+
+
+## Mutações pontuais: p53 e câncer
+
+Uma mutação pontual troca um resíduo entre centenas. O efeito pode ficar no lugar ou se propagar: muda a estrutura em volta, a estabilidade do enovelamento, a flexibilidade das regiões vizinhas e, no fim, a função. A p53 mostra os quatro efeitos na mesma proteína.
+
+![Quatro efeitos de uma mutação pontual](imagens/fund_mutacao_efeitos.png)
+
+**A proteína.** A p53 é um fator de transcrição. Quando o DNA é danificado, ela se liga a sequências específicas e ativa genes que param o ciclo celular ou levam a célula à apoptose. O gene *TP53* está mutado em cerca de metade dos cânceres humanos, quase sempre por troca de um único resíduo no domínio de ligação ao DNA (Bullock, Henckel e Fersht, 2000; Olivier, Hollstein e Hainaut, 2010).
+
+![p53 ligada ao DNA](imagens/fund_p53_estrutura.png)
+
+**Mutações de contato e estruturais.** A estrutura da p53 ligada ao DNA (Cho *et al.*, 1994) separou as mutações mais frequentes em dois grupos. Nas de contato, R248 e R273, some a arginina que tocava o DNA: a proteína continua enovelada, mas deixa de se ligar. Nas estruturais, como R175, G245, R249 e R282, a troca desorganiza a região que sustenta a superfície de contato (Joerger e Fersht, 2008).
+
+**Enovelamento.** O domínio de ligação ao DNA da p53 é pouco estável: a 37 °C, a diferença de energia livre entre a forma enovelada e a desenovelada é de cerca de 3 kcal/mol. Uma mutação que retire essa quantidade deixa metade das moléculas desenoveladas na temperatura do corpo, e as mutações do núcleo da proteína que chegam a esse limiar estão associadas ao câncer (Bullock, Henckel e Fersht, 2000). Na paisagem da seção 3, o vale nativo fica raso.
+
+**Uma cavidade como alvo: Y220C.** A troca da tirosina 220 por cisteína abre uma cavidade na superfície, longe do sítio de ligação ao DNA, e reduz a estabilidade em 4 kcal/mol. A mutação aparece em cerca de 75 mil novos casos de câncer por ano. Uma molécula pequena encontrada por triagem computacional, o PhiKan083, ocupa a cavidade e estabiliza a proteína (Boeckler *et al.*, 2008).
+
+![Y220C com PhiKan083](imagens/fund_p53_y220c.png)
+
+**Dinâmica e flexibilidade.** Uma mutação também muda o quanto cada região se move. Simulações da p53 revelaram um bolsão entre a alça L1 e a folha S3 que só se abre de forma transitória e não aparece nas estruturas cristalográficas. A mutação da Cys124, no centro desse bolsão, anula a reativação do mutante R175H pelo composto PRIMA-1 (Wassman *et al.*, 2013). É a analogia da fotografia e do filme, da seção 1, aplicada a um alvo de câncer.
+
+**O que a MD mede em cada efeito.**
+
+| Efeito | Como aparece na simulação | Análise |
+|--------|---------------------------|---------|
+| Estrutura local | cadeias laterais e contatos em volta do resíduo trocado | distâncias, contatos, RMSD da região |
+| Enovelamento | perda de estrutura secundária, desenovelamento parcial | DSSP, RMSD, fração de contatos nativos |
+| Flexibilidade | regiões que oscilam mais no mutante | RMSF por resíduo, selvagem contra mutante |
+| Função | perda de contato com o parceiro | contatos proteína-DNA, ligações de hidrogênio |
+
+No Martini com rede elástica, a proteína fica presa perto da estrutura inicial (seção 3). Para comparar selvagem e mutante em enovelamento e flexibilidade, a simulação precisa ser all-atom ou usar uma rede elástica mais fraca na região estudada.
+
 ## 4. Quanto custa cada resolução
 
 O custo por ns de simulação é aproximadamente $N \times n_{viz} \times 1/\Delta t$, com $n_{viz} = \rho \cdot \tfrac{4}{3}\pi r_c^3$ vizinhos dentro do cutoff. Sistema: a ubiquitina solvatada da Parte A (caixa de 295,5 nm³), com cada bead W trocado por 4 moléculas de 3 sítios em all-atom e united-atom.
@@ -194,12 +252,24 @@ Desempenho medido do Martini 3 nas três réplicas (Apple M2, 6 threads OpenMP; 
 
 Aplicando o fator de custo aos 14 min da ubiquitina, os mesmos 15 ns levariam da ordem de 16 dias em all-atom e 25 dias em united-atom, como limite superior.
 
+**Analogia: câmera lenta.** Se cada femtossegundo simulado durasse um segundo de filme, 1 µs de simulação levaria cerca de 32 anos para ser assistido, e 1 ms, cerca de 32 mil anos.
+
+**Exemplo: até onde a MD chegou.** A primeira simulação de uma proteína, o BPTI, cobriu menos de 10 ps (McCammon, Gelin e Karplus, 1977). Em 2010, o Anton, um supercomputador construído só para MD, simulou 1 ms do BPTI em all-atom (Shaw *et al.*, 2010). Em 2020, mais de um milhão de voluntários do Folding@home formaram o primeiro computador de exaescala e somaram 0,1 s de simulação das proteínas do SARS-CoV-2, com mais de 50 bolsões crípticos identificados (Zimmerman *et al.*, 2021).
+
+![Marcos de tempo simulado](imagens/fund_marcos_md.png)
+
 
 ## 5. Parte A: ubiquitina em Martini 3
 
 Passo a passo com todos os comandos, parâmetros e análises: [guias/proteina.md](guias/proteina.md).
 
 **Por que a ubiquitina.** É uma proteína pequena (76 resíduos, carga líquida zero) presente em todas as células eucarióticas. Ela funciona como etiqueta: enzimas ligam a Gly76 da cauda C-terminal a lisinas de outras proteínas, e cadeias ligadas pela Lys48 marcam a proteína para degradação no proteassomo. Esse sistema é alvo terapêutico: o bortezomibe, inibidor do proteassomo, foi aprovado em 2003 para o mieloma múltiplo (Bross *et al.*, 2004). Cada etapa do notebook termina com a visualização 3D do sistema, a explicação, os números do sistema e a mesma etapa nas três resoluções. Embaixo de cada visualização há uma barra: nos filmes, pause e escolha o quadro; **Baixar imagem (PNG)** salva a cena como está na tela e **Baixar estrutura do quadro (PDB)** salva as coordenadas daquele quadro, que abrem no VMD, no PyMOL ou no ChimeraX.
+
+**Analogia: etiqueta de endereço.** A ubiquitina funciona como uma etiqueta colada na proteína que deve ser descartada. Uma cadeia de pelo menos quatro ubiquitinas ligadas pela Lys48 é o sinal mínimo para o proteassomo (Thrower *et al.*, 2000). A enzima que escolhe qual proteína recebe a etiqueta é a ligase E3.
+
+![Ubiquitina como etiqueta](imagens/fund_ubiquitina_etiqueta.png)
+
+**Exemplo: Parkinson e síndrome de Angelman.** Mutações no gene da parkina causam parkinsonismo juvenil autossômico recessivo (Kitada *et al.*, 1998), e a parkina é uma ligase E3 (Shimura *et al.*, 2000). Na síndrome de Angelman, mutações em *UBE3A*, outra ligase E3, causam a doença (Kishino, Lalande e Wagstaff, 1997). Nos dois casos a etiqueta deixa de ser colada nas proteínas certas.
 
 | Etapa | Comando ou arquivo | Valor |
 |-------|--------------------|-------|
@@ -248,6 +318,14 @@ Passo a passo com todos os comandos, parâmetros e análises: [guias/membrana.md
 Lipídios distribuídos ao acaso em água se organizam sozinhos em bicamada, guiados pelo efeito hidrofóbico. Na Parte A a estrutura estava dada; aqui nada é imposto. É o mesmo princípio que forma as membranas das células, os lipossomos usados para entregar fármacos e as nanopartículas lipídicas das vacinas de mRNA.
 
 **Por que o DSPC.** O DSPC (1,2-diestearoil-sn-glicero-3-fosfocolina) é uma simplificação: existe na natureza, mas não é o lipídio típico de uma membrana celular. Ele pertence à classe das fosfatidilcolinas (PC), que somam mais da metade dos fosfolipídios na maioria das membranas eucarióticas (van Meer *et al.*, 2008), e tem a mesma cabeça polar das PCs naturais. A diferença está nas caudas: as PCs das células costumam combinar uma cauda saturada com uma insaturada, como o POPC (16:0/18:1), e o DSPC tem as duas saturadas, com 18 carbonos (18:0/18:0). Por isso a bicamada de DSPC é mais ordenada e passa de gel a fluida só em torno de 55 °C (Koynova e Caffrey, 1998), o que leva a simulação a 340 K.
+
+**Analogia: óleo e água.** Gotas de óleo na água se juntam numa gota maior, porque a água forma mais ligações de hidrogênio consigo mesma quando a área de contato com o óleo diminui. Um lipídio tem cabeça polar e caudas apolares: em vez de formar uma gota, as caudas se escondem entre duas camadas de cabeças voltadas para a água. É o que a Parte B mostra acontecendo sozinho.
+
+![Óleo, bicamada e surfactante](imagens/fund_oleo_surfactante.png)
+
+**Exemplo: surfactante pulmonar.** Nos alvéolos, uma camada de lipídios na interface entre o ar e a água reduz a tensão superficial e impede que os alvéolos se fechem ao expirar. O surfactante tem cerca de 90% de lipídios, principalmente fosfatidilcolina (Veldhuizen *et al.*, 1998). Recém-nascidos prematuros produzem pouco surfactante: Avery e Mead (1959) mostraram que a doença da membrana hialina, hoje chamada síndrome do desconforto respiratório do recém-nascido, vem dessa falta.
+
+**Exemplo: vacinas de mRNA.** O próprio DSPC faz parte das nanopartículas lipídicas que levam o mRNA das vacinas contra a COVID-19 para dentro das células, como lipídio auxiliar (Hou *et al.*, 2021).
 
 | Item | Valor |
 |------|-------|
@@ -371,6 +449,10 @@ Parte dos AMPs atravessa a membrana sem rompê-la e age em alvos internos, como 
 ## 7. Réplicas e sementes
 
 Uma simulação é uma amostra de uma trajetória possível. Uma conclusão tirada de uma única corrida pode ser acaso daquela trajetória. Com réplicas independentes, cada resultado vira média ± desvio, e um evento raro em uma só fica visível como raro.
+
+**Analogia: previsão do tempo.** Os serviços de meteorologia rodam o mesmo modelo várias vezes, com condições iniciais levemente diferentes, porque pequenas diferenças crescem com o tempo (Lorenz, 1963). Réplicas de MD fazem o mesmo: a física é igual, as velocidades iniciais mudam, e cada réplica cruza as barreiras em momentos diferentes. Em sistemas de 10 e de 827 resíduos, conclusões tiradas de uma única simulação muitas vezes não se repetiram, e várias réplicas curtas foram mais confiáveis que uma longa (Knapp, Ospina e Deane, 2018).
+
+![Réplicas divergem](imagens/fund_replicas_divergem.png)
 
 Réplicas só são independentes se as sementes dos geradores aleatórios forem diferentes:
 
@@ -573,6 +655,33 @@ rvdw                     = 1.1
 - Shai, Y. Mode of action of membrane active antimicrobial peptides. *Biopolymers* **2002**, *66*, 236-248. https://doi.org/10.1002/bip.10260
 - Bross, P. F. *et al.* Approval summary for bortezomib for injection in the treatment of multiple myeloma. *Clin. Cancer Res.* **2004**, *10*, 3954-3964. https://doi.org/10.1158/1078-0432.CCR-03-0781
 - Koynova, R.; Caffrey, M. Phases and phase transitions of the phosphatidylcholines. *Biochim. Biophys. Acta* **1998**, *1376*, 91-145. https://doi.org/10.1016/S0304-4157(98)00006-9
+- Schames, J. R.; Henchman, R. H.; Siegel, J. S.; Sotriffer, C. A.; Ni, H.; McCammon, J. A. Discovery of a novel binding trench in HIV integrase. *J. Med. Chem.* **2004**, *47*, 1879-1881. https://doi.org/10.1021/jm0341913
+- Durrant, J. D.; McCammon, J. A. Molecular dynamics simulations and drug discovery. *BMC Biol.* **2011**, *9*, 71. https://doi.org/10.1186/1741-7007-9-71
+- Warshel, A.; Levitt, M. Theoretical studies of enzymic reactions: dielectric, electrostatic and steric stabilization of the carbonium ion in the reaction of lysozyme. *J. Mol. Biol.* **1976**, *103*, 227-249. https://doi.org/10.1016/0022-2836(76)90311-9
+- Ingram, V. M. Gene mutations in human haemoglobin: the chemical difference between normal and sickle cell haemoglobin. *Nature* **1957**, *180*, 326-328. https://doi.org/10.1038/180326a0
+- Kerem, B. *et al.* Identification of the cystic fibrosis gene: genetic analysis. *Science* **1989**, *245*, 1073-1080. https://doi.org/10.1126/science.2570460
+- Riordan, J. R. *et al.* Identification of the cystic fibrosis gene: cloning and characterization of complementary DNA. *Science* **1989**, *245*, 1066-1073. https://doi.org/10.1126/science.2475911
+- Cheng, S. H. *et al.* Defective intracellular transport and processing of CFTR is the molecular basis of most cystic fibrosis. *Cell* **1990**, *63*, 827-834. https://doi.org/10.1016/0092-8674(90)90148-8
+- Chiti, F.; Dobson, C. M. Protein misfolding, amyloid formation, and human disease: a summary of progress over the last decade. *Annu. Rev. Biochem.* **2017**, *86*, 27-68. https://doi.org/10.1146/annurev-biochem-061516-045115
+- Prusiner, S. B. Prions. *Proc. Natl. Acad. Sci. USA* **1998**, *95*, 13363-13383. https://doi.org/10.1073/pnas.95.23.13363
+- Bullock, A. N.; Henckel, J.; Fersht, A. R. Quantitative analysis of residual folding and DNA binding in mutant p53 core domain: definition of mutant states for rational drug design. *Oncogene* **2000**, *19*, 1245-1256. https://doi.org/10.1038/sj.onc.1203434
+- Olivier, M.; Hollstein, M.; Hainaut, P. TP53 mutations in human cancers: origins, consequences, and clinical use. *Cold Spring Harb. Perspect. Biol.* **2010**, *2*, a001008. https://doi.org/10.1101/cshperspect.a001008
+- Cho, Y.; Gorina, S.; Jeffrey, P. D.; Pavletich, N. P. Crystal structure of a p53 tumor suppressor-DNA complex: understanding tumorigenic mutations. *Science* **1994**, *265*, 346-355. https://doi.org/10.1126/science.8023157
+- Joerger, A. C.; Fersht, A. R. Structural biology of the tumor suppressor p53. *Annu. Rev. Biochem.* **2008**, *77*, 557-582. https://doi.org/10.1146/annurev.biochem.77.060806.091238
+- Boeckler, F. M. *et al.* Targeted rescue of a destabilized mutant of p53 by an in silico screened drug. *Proc. Natl. Acad. Sci. USA* **2008**, *105*, 10360-10365. https://doi.org/10.1073/pnas.0805326105
+- Wassman, C. D. *et al.* Computational identification of a transiently open L1/S3 pocket for reactivation of mutant p53. *Nat. Commun.* **2013**, *4*, 1407. https://doi.org/10.1038/ncomms2361
+- McCammon, J. A.; Gelin, B. R.; Karplus, M. Dynamics of folded proteins. *Nature* **1977**, *267*, 585-590. https://doi.org/10.1038/267585a0
+- Shaw, D. E. *et al.* Atomic-level characterization of the structural dynamics of proteins. *Science* **2010**, *330*, 341-346. https://doi.org/10.1126/science.1187409
+- Zimmerman, M. I. *et al.* SARS-CoV-2 simulations go exascale to predict dramatic spike opening and cryptic pockets across the proteome. *Nat. Chem.* **2021**, *13*, 651-659. https://doi.org/10.1038/s41557-021-00707-0
+- Thrower, J. S.; Hoffman, L.; Rechsteiner, M.; Pickart, C. M. Recognition of the polyubiquitin proteolytic signal. *EMBO J.* **2000**, *19*, 94-102. https://doi.org/10.1093/emboj/19.1.94
+- Kitada, T. *et al.* Mutations in the parkin gene cause autosomal recessive juvenile parkinsonism. *Nature* **1998**, *392*, 605-608. https://doi.org/10.1038/33416
+- Shimura, H. *et al.* Familial Parkinson disease gene product, parkin, is a ubiquitin-protein ligase. *Nat. Genet.* **2000**, *25*, 302-305. https://doi.org/10.1038/77060
+- Kishino, T.; Lalande, M.; Wagstaff, J. UBE3A/E6-AP mutations cause Angelman syndrome. *Nat. Genet.* **1997**, *15*, 70-73. https://doi.org/10.1038/ng0197-70
+- Veldhuizen, R.; Nag, K.; Orgeig, S.; Possmayer, F. The role of lipids in pulmonary surfactant. *Biochim. Biophys. Acta* **1998**, *1408*, 90-108. https://doi.org/10.1016/S0925-4439(98)00061-1
+- Avery, M. E.; Mead, J. Surface properties in relation to atelectasis and hyaline membrane disease. *AMA J. Dis. Child.* **1959**, *97*, 517-523. https://doi.org/10.1001/archpedi.1959.02070010519001
+- Hou, X.; Zaks, T.; Langer, R.; Dong, Y. Lipid nanoparticles for mRNA delivery. *Nat. Rev. Mater.* **2021**, *6*, 1078-1094. https://doi.org/10.1038/s41578-021-00358-0
+- Lorenz, E. N. Deterministic nonperiodic flow. *J. Atmos. Sci.* **1963**, *20*, 130-141. https://doi.org/10.1175/1520-0469(1963)020<0130:DNF>2.0.CO;2
+- Knapp, B.; Ospina, L.; Deane, C. M. Avoiding false positive conclusions in molecular simulation: the importance of replicas. *J. Chem. Theory Comput.* **2018**, *14*, 6127-6138. https://doi.org/10.1021/acs.jctc.8b00391
 - Tutorial Martini 3, *Lipid bilayers, Part I: Self-assembly*: https://cgmartini.nl/docs/tutorials/Martini3/LipidsI/
 - Inputs do tutorial de Lemkul: https://github.com/Lemkul-Lab/gmx_tutorials_jpcb
 - Manual do GROMACS: https://manual.gromacs.org/
