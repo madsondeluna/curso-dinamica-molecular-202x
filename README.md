@@ -1,6 +1,6 @@
 # Dinâmica Molecular: do átomo ao fenômeno
 
-Material didático e notebook para o Google Colab sobre dinâmica molecular em resolução coarse-grained (Martini 3). Dois sistemas: a ubiquitina em água com 0,15 M de NaCl e a automontagem de uma bicamada lipídica a partir de moléculas de DSPC (1,2-diestearoil-sn-glicero-3-fosfocolina, um fosfolipídio com duas caudas saturadas de 18 carbonos) dispersas em água. Cada etapa é comparada com as resoluções all-atom, united-atom e quântica.
+Material didático e notebook para o Google Colab sobre dinâmica molecular em resolução coarse-grained (Martini 3). Dois sistemas: a ubiquitina em água com 0,15 M de NaCl e a automontagem de uma bicamada lipídica a partir de moléculas de DSPC (1,2-diestearoil-sn-glicero-3-fosfocolina, um fosfolipídio com duas caudas saturadas de 18 carbonos) dispersas em água.
 
 | Notebook | Resolução | Sistemas | Colab |
 |----------|-----------|----------|-------|
@@ -246,6 +246,8 @@ Nas três réplicas, a rede elástica mantém o enovelamento (RMSD de 0,17 a 0,2
 Passo a passo com todos os comandos, parâmetros e análises: [guias/membrana.md](guias/membrana.md).
 
 Lipídios distribuídos ao acaso em água se organizam sozinhos em bicamada, guiados pelo efeito hidrofóbico. Na Parte A a estrutura estava dada; aqui nada é imposto. É o mesmo princípio que forma as membranas das células, os lipossomos usados para entregar fármacos e as nanopartículas lipídicas das vacinas de mRNA.
+
+**Por que o DSPC.** O DSPC (1,2-diestearoil-sn-glicero-3-fosfocolina) é uma simplificação: existe na natureza, mas não é o lipídio típico de uma membrana celular. Ele pertence à classe das fosfatidilcolinas (PC), que somam mais da metade dos fosfolipídios na maioria das membranas eucarióticas (van Meer *et al.*, 2008), e tem a mesma cabeça polar das PCs naturais. A diferença está nas caudas: as PCs das células costumam combinar uma cauda saturada com uma insaturada, como o POPC (16:0/18:1), e o DSPC tem as duas saturadas, com 18 carbonos (18:0/18:0). Por isso a bicamada de DSPC é mais ordenada e passa de gel a fluida só em torno de 55 °C (Koynova e Caffrey, 1998), o que leva a simulação a 340 K.
 
 | Item | Valor |
 |------|-------|
@@ -570,6 +572,7 @@ rvdw                     = 1.1
 - Brogden, K. A. Antimicrobial peptides: pore formers or metabolic inhibitors in bacteria? *Nat. Rev. Microbiol.* **2005**, *3*, 238-250. https://doi.org/10.1038/nrmicro1098
 - Shai, Y. Mode of action of membrane active antimicrobial peptides. *Biopolymers* **2002**, *66*, 236-248. https://doi.org/10.1002/bip.10260
 - Bross, P. F. *et al.* Approval summary for bortezomib for injection in the treatment of multiple myeloma. *Clin. Cancer Res.* **2004**, *10*, 3954-3964. https://doi.org/10.1158/1078-0432.CCR-03-0781
+- Koynova, R.; Caffrey, M. Phases and phase transitions of the phosphatidylcholines. *Biochim. Biophys. Acta* **1998**, *1376*, 91-145. https://doi.org/10.1016/S0304-4157(98)00006-9
 - Tutorial Martini 3, *Lipid bilayers, Part I: Self-assembly*: https://cgmartini.nl/docs/tutorials/Martini3/LipidsI/
 - Inputs do tutorial de Lemkul: https://github.com/Lemkul-Lab/gmx_tutorials_jpcb
 - Manual do GROMACS: https://manual.gromacs.org/
