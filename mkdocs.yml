@@ -14,8 +14,8 @@ theme:
     logo: material/atom
     repo: fontawesome/brands/github
   font:
-    text: Inter
-    code: JetBrains Mono
+    text: IBM Plex Sans
+    code: IBM Plex Mono
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -46,9 +46,6 @@ theme:
 plugins:
   - search:
       lang: pt
-  - glightbox:
-      zoomable: true
-      skip_classes: [no-lightbox]
 
 extra_css:
   - stylesheets/extra.css
