@@ -26,8 +26,6 @@ Este notebook simula dois sistemas de natureza diferente com o mesmo campo de fo
 | A | Ubiquitina (1UBQ) em água + 0,15 M NaCl | Dinâmica de uma proteína enovelada | 0,5 ns (equilibração) + 15 ns |
 | B | 128 DSPC + 1 536 W | Automontagem espontânea de uma bicamada lipídica | 15 ns |
 
-A Parte A usa a mesma proteína do curso atomístico anterior (`legado/MD_GMX.ipynb`). A Parte B reproduz o tutorial oficial *Lipid bilayers, Part I: Self-assembly* do Martini 3.
-
 Cada etapa termina com a visualização 3D interativa do sistema (arraste para girar, role para aproximar), a explicação do que aconteceu, os números do sistema naquele momento, e a mesma etapa comparada em três resoluções. Embaixo de cada visualização há uma barra: nos filmes, pause e escolha o quadro; **Baixar imagem (PNG)** salva a cena como está na tela e **Baixar estrutura do quadro (PDB)** salva as coordenadas daquele quadro, que abrem no VMD, no PyMOL ou no ChimeraX. As três resoluções comparadas:
 
 | Resolução | Partícula | Exemplo de campo de força | Usado aqui |
