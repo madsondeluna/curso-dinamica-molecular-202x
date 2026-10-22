@@ -1,6 +1,6 @@
 # Dinâmica Molecular: do átomo ao fenômeno
 
-Material de aula executável no Google Colab: uma proteína e uma membrana que se monta sozinha, em resolução coarse-grained (Martini 3), comparadas o tempo todo com as resoluções all-atom, united-atom e quântica.
+Material didático e notebook para o Google Colab sobre dinâmica molecular em resolução coarse-grained (Martini 3). Dois sistemas: a ubiquitina em água e a automontagem de uma bicamada lipídica de DSPC a partir de lipídios dispersos em meio aquoso. Cada etapa é comparada com as resoluções all-atom, united-atom e quântica.
 
 | Notebook | Resolução | Sistemas | Colab |
 |----------|-----------|----------|-------|
