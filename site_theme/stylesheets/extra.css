@@ -226,7 +226,13 @@
   border-radius: 0;
 }
 
-.md-typeset p > img {
+/* figuras na largura exata da coluna, alinhadas ao texto justificado */
+.md-typeset p > img:only-child {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 75vh;
+  object-fit: contain;
   border: 1px solid var(--line);
   background-color: #ffffff;
 }
