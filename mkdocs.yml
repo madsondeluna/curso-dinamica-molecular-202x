@@ -5,7 +5,7 @@ repo_url: https://github.com/madsondeluna/curso-md
 repo_name: madsondeluna/curso-md
 edit_uri: ""
 docs_dir: site_src
-copyright: Madson A. de Luna-Aragão, MSc · UFMG · CNRS IBCP
+copyright: Madson A. de Luna-Aragão · UFMG · CNRS IBCP
 
 theme:
   name: material

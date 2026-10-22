@@ -38,7 +38,7 @@ Cada etapa termina com a visualização 3D interativa do sistema (arraste para g
 md('''
 | Autoria | |
 |---|---|
-| Autor | **Madson A. de Luna-Aragão**, MSc |
+| Autor | **Madson A. de Luna-Aragão** |
 | Vínculos | Programa Interunidades de Pós-Graduação em Bioinformática, Universidade Federal de Minas Gerais (UFMG), Belo Horizonte, Brasil<br>Centre National de la Recherche Scientifique (CNRS), Institut de Biologie et Chimie des Protéines (IBCP), Lyon, França |
 | E-mail | [madsondeluna@gmail.com](mailto:madsondeluna@gmail.com) |
 | Site | [madsondeluna.com](https://madsondeluna.com) |
