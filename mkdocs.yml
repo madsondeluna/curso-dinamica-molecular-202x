@@ -1,0 +1,64 @@
+site_name: "Dinâmica Molecular: do átomo ao bead"
+site_url: https://madsondeluna.com/curso-md/
+site_author: Madson A. de Luna-Aragão
+repo_url: https://github.com/madsondeluna/curso-md
+repo_name: madsondeluna/curso-md
+edit_uri: ""
+docs_dir: site_src
+copyright: Madson A. de Luna-Aragão, MSc
+
+nav:
+  - Aula: index.md
+  - "Passo a passo: proteína": guias/proteina.md
+  - "Passo a passo: membrana": guias/membrana.md
+
+theme:
+  name: material
+  language: pt-BR
+  font: false
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Modo escuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Modo claro
+  features:
+    - navigation.tabs
+    - navigation.top
+    - navigation.instant
+    - toc.follow
+    - search.highlight
+    - content.code.copy
+
+extra_css:
+  - https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,300&family=Public+Sans:wght@300..600&family=Spline+Sans+Mono:wght@400;500&display=swap
+  - stylesheets/tokens.css
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
+
+markdown_extensions:
+  - tables
+  - attr_list
+  - md_in_html
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+  - toc:
+      permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+
+validation:
+  links:
+    anchors: warn
