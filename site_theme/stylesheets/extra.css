@@ -117,6 +117,20 @@
   font-weight: 600;
 }
 
+/* paragrafos e listas justificados, com hifenizacao pt-BR */
+.md-typeset p,
+.md-typeset li {
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+.md-typeset .grid.cards li,
+.md-typeset .grid.cards li p {
+  text-align: left;
+  hyphens: manual;
+}
+
 /* menu lateral: grupos em mono, cada um com a cor de um tipo de bead */
 .md-nav__item--section > .md-nav__link {
   font-family: var(--md-code-font-family);
