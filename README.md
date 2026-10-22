@@ -1,6 +1,6 @@
 # Dinâmica Molecular: do átomo ao fenômeno
 
-Material didático e notebook para o Google Colab sobre dinâmica molecular em resolução coarse-grained (Martini 3). Dois sistemas: a ubiquitina em água e a automontagem de uma bicamada lipídica de DSPC a partir de lipídios dispersos em meio aquoso. Cada etapa é comparada com as resoluções all-atom, united-atom e quântica.
+Material didático e notebook para o Google Colab sobre dinâmica molecular em resolução coarse-grained (Martini 3). Dois sistemas: a ubiquitina em água com 0,15 M de NaCl e a automontagem de uma bicamada lipídica a partir de moléculas de DSPC (1,2-diestearoil-sn-glicero-3-fosfocolina, um fosfolipídio com duas caudas saturadas de 18 carbonos) dispersas em água. Cada etapa é comparada com as resoluções all-atom, united-atom e quântica.
 
 | Notebook | Resolução | Sistemas | Colab |
 |----------|-----------|----------|-------|
