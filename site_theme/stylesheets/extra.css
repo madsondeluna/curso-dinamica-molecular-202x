@@ -1,87 +1,188 @@
-/* Pure Design sobre o Material: o tema claro usa os semanticos de :root,
-   o escuro repete os de :root.deep-blue de tokens.css. */
-[data-md-color-scheme="slate"] {
-  color-scheme: dark;
-  --bg:            var(--slate-950);
-  --surface:       var(--slate-850);
-  --surface-hover: var(--slate-820);
-  --border:        var(--slate-800);
-  --border-hover:  var(--slate-700);
-  --text:          var(--slate-50);
-  --muted:         var(--slate-400);
-  --accent:        var(--slate-300);
+/* Visual do site do curso: fundo branco, destaque azul-petroleo, Inter. */
+:root,
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color:        #0f6e6e;
+  --md-primary-fg-color--light: #2b8a8a;
+  --md-primary-fg-color--dark:  #0a5252;
+  --md-accent-fg-color:         #0f6e6e;
+  --md-typeset-a-color:         #0f6e6e;
+  --site-header-bg:             #ffffff;
+  --site-header-fg:             #14232b;
+  --site-border:                #e3e8ec;
+  --site-soft:                  #f5f8f9;
+  --site-hero-bg:               #f0f6f6;
 }
 
-[data-md-color-scheme="default"],
 [data-md-color-scheme="slate"] {
-  --md-default-bg-color:          var(--bg);
-  --md-default-fg-color:          var(--text);
-  --md-default-fg-color--light:   var(--muted);
-  --md-default-fg-color--lighter: var(--border-hover);
-  --md-default-fg-color--lightest: var(--border);
-  --md-primary-fg-color:          var(--bg);
-  --md-primary-bg-color:          var(--text);
-  --md-primary-bg-color--light:   var(--muted);
-  --md-accent-fg-color:           var(--accent);
-  --md-typeset-color:             var(--text);
-  --md-typeset-a-color:           var(--accent);
-  --md-code-bg-color:             var(--surface);
-  --md-code-fg-color:             var(--text);
-  --md-footer-bg-color:           var(--surface);
-  --md-footer-bg-color--dark:     var(--bg);
-  --md-footer-fg-color:           var(--text);
-  --md-footer-fg-color--light:    var(--muted);
-  --md-text-font-family:          var(--font-sans);
-  --md-code-font-family:          var(--font-mono);
+  --md-hue: 200;
+  --md-default-bg-color:        #0f171c;
+  --md-primary-fg-color:        #4fb3ac;
+  --md-primary-fg-color--light: #6fc7c0;
+  --md-primary-fg-color--dark:  #2f8f88;
+  --md-accent-fg-color:         #6fc7c0;
+  --md-typeset-a-color:         #5cc0b8;
+  --site-header-bg:             #0f171c;
+  --site-header-fg:             #e6eef1;
+  --site-border:                #22313a;
+  --site-soft:                  #15212a;
+  --site-hero-bg:               #13232a;
 }
 
-.md-header,
-.md-tabs {
-  color: var(--text);
-  background-color: var(--bg);
-  border-bottom: 1px solid var(--border);
+/* cabecalho claro com linha fina em vez de faixa colorida */
+.md-header {
+  background-color: var(--site-header-bg);
+  color: var(--site-header-fg);
   box-shadow: none;
+  border-bottom: 1px solid var(--site-border);
 }
 
+.md-header__button.md-logo .md-icon,
+.md-header__button.md-logo svg {
+  fill: var(--md-primary-fg-color);
+}
+
+.md-search__form {
+  background-color: var(--site-soft);
+  border-radius: 8px;
+}
+
+.md-search__input,
+.md-search__icon {
+  color: var(--site-header-fg);
+}
+
+.md-search__input::placeholder {
+  color: var(--md-default-fg-color--light);
+}
+
+/* tipografia */
 .md-typeset {
-  font-size: var(--text-15);
+  font-size: 0.82rem;
+  line-height: 1.7;
 }
 
-.md-typeset h1,
+.md-typeset h1 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--md-default-fg-color);
+}
+
 .md-typeset h2 {
-  font-family: var(--font-display);
-  font-stretch: var(--font-display-stretch);
-  font-weight: 300;
-  color: var(--text);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin-top: 2.2em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--site-border);
 }
 
-.md-typeset a {
-  text-decoration: underline;
+.md-typeset h3 {
+  font-weight: 600;
 }
 
-.md-typeset code {
-  border-radius: var(--radius-mark);
+/* menu lateral */
+.md-nav__item--section > .md-nav__link {
+  color: var(--md-default-fg-color);
+  font-weight: 700;
+  text-transform: none;
 }
 
-.md-typeset pre > code {
-  border-radius: var(--radius-field);
+.md-nav__link--active {
+  font-weight: 600;
 }
 
+/* tabelas e figuras */
 .md-typeset table:not([class]) {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-surface);
-  font-size: var(--text-14);
+  border: 1px solid var(--site-border);
+  border-radius: 8px;
+  box-shadow: none;
   font-variant-numeric: tabular-nums;
 }
 
 .md-typeset table:not([class]) th {
-  background-color: var(--surface);
+  background-color: var(--site-soft);
+  font-weight: 600;
 }
 
 .md-typeset img {
-  border-radius: var(--radius-field);
+  border-radius: 6px;
 }
 
-.md-search__form {
-  border-radius: var(--radius-field);
+.md-typeset .glightbox img {
+  border: 1px solid var(--site-border);
+  background-color: #ffffff;
+}
+
+/* capa */
+.md-typeset .hero {
+  margin: 0 0 2rem;
+  padding: 2.5rem 2rem;
+  border-radius: 12px;
+  background-color: var(--site-hero-bg);
+  border: 1px solid var(--site-border);
+}
+
+.md-typeset .hero h1 {
+  font-size: 2.2rem;
+  line-height: 1.15;
+  margin: 0 0 0.8rem;
+}
+
+.md-typeset .hero p {
+  max-width: 42rem;
+  font-size: 0.95rem;
+}
+
+.md-typeset .hero .md-button {
+  margin: 0.4rem 0.4rem 0 0;
+  border-radius: 8px;
+}
+
+.md-typeset .grid.cards > ul > li {
+  border: 1px solid var(--site-border);
+  border-radius: 10px;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.md-typeset .grid.cards > ul > li:hover {
+  border-color: var(--md-primary-fg-color);
+  transform: translateY(-2px);
+}
+
+.md-typeset .grid.cards a {
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md-typeset .grid.cards > ul > li {
+    transition: none;
+  }
+}
+
+@media screen and (max-width: 44.9375em) {
+  .md-typeset .hero {
+    padding: 1.6rem 1.2rem;
+  }
+
+  .md-typeset .hero h1 {
+    font-size: 1.6rem;
+  }
+}
+
+/* rodape claro, mesma linha fina do cabecalho */
+.md-footer,
+.md-footer-meta {
+  background-color: var(--site-soft);
+  color: var(--md-default-fg-color);
+  border-top: 1px solid var(--site-border);
+}
+
+.md-footer__title,
+.md-footer__direction,
+.md-footer-copyright,
+.md-footer-copyright a {
+  color: var(--md-default-fg-color--light);
+}
+
+.md-footer__link:hover .md-ellipsis {
+  color: var(--md-primary-fg-color);
 }

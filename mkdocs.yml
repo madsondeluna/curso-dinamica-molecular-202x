@@ -1,43 +1,56 @@
-site_name: "Dinâmica Molecular: do átomo ao bead"
+site_name: "Dinâmica Molecular: do átomo ao fenômeno"
 site_url: https://madsondeluna.com/curso-md/
 site_author: Madson A. de Luna-Aragão
 repo_url: https://github.com/madsondeluna/curso-md
 repo_name: madsondeluna/curso-md
 edit_uri: ""
 docs_dir: site_src
-copyright: Madson A. de Luna-Aragão, MSc
-
-nav:
-  - Aula: index.md
-  - "Passo a passo: proteína": guias/proteina.md
-  - "Passo a passo: membrana": guias/membrana.md
+copyright: Madson A. de Luna-Aragão, MSc · UFMG · CNRS IBCP
 
 theme:
   name: material
   language: pt-BR
-  font: false
+  icon:
+    logo: material/atom
+    repo: fontawesome/brands/github
+  font:
+    text: Inter
+    code: JetBrains Mono
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-night
         name: Modo escuro
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-sunny
         name: Modo claro
   features:
-    - navigation.tabs
-    - navigation.top
     - navigation.instant
+    - navigation.instant.progress
+    - navigation.sections
+    - navigation.footer
+    - navigation.top
+    - toc.integrate
     - toc.follow
+    - search.suggest
     - search.highlight
     - content.code.copy
 
+plugins:
+  - search:
+      lang: pt
+  - glightbox:
+      zoomable: true
+      skip_classes: [no-lightbox]
+
 extra_css:
-  - https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,300&family=Public+Sans:wght@300..600&family=Spline+Sans+Mono:wght@400;500&display=swap
-  - stylesheets/tokens.css
   - stylesheets/extra.css
 
 extra_javascript:
@@ -49,8 +62,12 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - admonition
+  - pymdownx.details
   - pymdownx.highlight
   - pymdownx.superfences
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.arithmatex:
       generic: true
   - toc:

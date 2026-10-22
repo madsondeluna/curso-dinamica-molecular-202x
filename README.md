@@ -1,4 +1,4 @@
-# Dinâmica Molecular: do átomo ao bead
+# Dinâmica Molecular: do átomo ao fenômeno
 
 Material de aula executável no Google Colab: uma proteína e uma membrana que se monta sozinha, em resolução coarse-grained (Martini 3), comparadas o tempo todo com as resoluções all-atom, united-atom e quântica.
 
