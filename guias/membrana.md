@@ -190,6 +190,10 @@ print(f'D_PP = {D_PP:.2f} nm; área por lipídio = {APL:.3f} nm²')
 
 ![Perfil de densidade](../imagens/martini_perfil_densidade.png)
 
+![Esquema do perfil de densidade](../imagens/martini_perfil_esquema.png)
+
+Cada curva do perfil conta, fatia a fatia ao longo da normal, um tipo de bead do esquema acima dela. A colina (NC3) fica em média só 0,1 nm mais para fora que o fosfato (PO4), 2,24 contra 2,14 nm, porque a cabeça deita quase paralela ao plano da membrana: por isso os dois picos quase se sobrepõem. O glicerol (GL) marca a fronteira entre cabeças e caudas em ±1,8 nm, e a água entra entre as cabeças até cerca de ±1,3 nm antes de sumir no núcleo.
+
 A réplica 3 não formou bicamada em 15 ns e fica de fora dessas medidas: a seção de réplicas do README discute o caso.
 
 ## Resumo dos arquivos

@@ -360,6 +360,10 @@ Na equilibração, o lado da caixa no plano da membrana cai de 7,14 para 6,26 nm
 
 Ao longo da normal, a água (W) some no centro, as caudas ocupam o núcleo e os picos de PO4 ficam em torno de ±2,1 nm. A distância entre os dois picos é a espessura $D_{PP}$ = 4,28 nm.
 
+![Esquema do perfil de densidade](imagens/martini_perfil_esquema.png)
+
+Cada curva do perfil conta, fatia a fatia ao longo da normal, um tipo de bead do esquema acima dela. A colina (NC3) fica em média só 0,1 nm mais para fora que o fosfato (PO4), 2,24 contra 2,14 nm, porque a cabeça deita quase paralela ao plano da membrana: por isso os dois picos quase se sobrepõem. O glicerol (GL) marca a fronteira entre cabeças e caudas em ±1,8 nm, e a água entra entre as cabeças até cerca de ±1,3 nm antes de sumir no núcleo.
+
 Resultado das três réplicas:
 
 | Réplica | Bicamada | Formação | $D_{PP}$ (nm) | Área por lipídio (nm²) | $S$ final | Energia final (kJ/mol) |

@@ -3,7 +3,7 @@
 Esquemas ilustrativos, no mesmo estilo de tools/make_figures.py; a unica
 figura calculada e a das replicas (Langevin em poco duplo, modelo de brinquedo).
 
-Uso: python tools/make_analogy_figures.py
+Uso: uv run --no-project --with matplotlib --with numpy --with mdtraj python tools/make_analogy_figures.py
 """
 from __future__ import annotations
 
@@ -512,11 +512,283 @@ def fig_mutation_effects():
     save(fig, 'fund_mutacao_efeitos.png')
 
 
+# ---------------------------------------------------------------- 11. termos do campo de forca e diedro
+ATOM, OXY, HYD = '#c9c2b4', '#c44e52', '#ffffff'
+
+
+def _atom(ax, xy, r=0.32, fc=ATOM, text=None, z=4, fs=9, lw=0.8, alpha=1.0):
+    ax.add_patch(Circle(xy, r, fc=fc, ec=INK, lw=lw, zorder=z, alpha=alpha))
+    if text:
+        ax.text(xy[0], xy[1], text, ha='center', va='center', fontsize=fs, zorder=z + 1)
+
+
+def _stick(ax, p, q, color=GREY, lw=2.2, z=2, ls='-'):
+    ax.plot([p[0], q[0]], [p[1], q[1]], color=color, lw=lw, zorder=z, ls=ls, solid_capstyle='round')
+
+
+def _spring(ax, p, q, n=7, amp=0.16, color=GREY):
+    p, q = np.array(p, float), np.array(q, float)
+    t = np.linspace(0, 1, 2 * n + 3)
+    d = q - p; nrm = np.array([-d[1], d[0]]) / np.linalg.norm(d)
+    off = np.zeros_like(t); off[2:-2] = amp * (-1) ** np.arange(len(t) - 4)
+    pts = p + np.outer(t, d) + np.outer(off, nrm)
+    ax.plot(pts[:, 0], pts[:, 1], color=color, lw=1.6, zorder=2)
+
+
+def _dim(ax, p, q, text, y_text=None, color=INK):
+    ax.add_patch(FancyArrowPatch(p, q, arrowstyle='<|-|>', mutation_scale=10, color=color, lw=1.0))
+    ax.text((p[0] + q[0]) / 2, y_text if y_text is not None else p[1] - 0.25, text,
+            ha='center', va='top', fontsize=9)
+
+
+def fig_force_field_schemes():
+    fig, axs = plt.subplots(1, 5, figsize=(17, 3.6))
+    for ax in axs:
+        frame_off(ax); ax.set_aspect('equal'); ax.set_xlim(-1.6, 3.6); ax.set_ylim(-1.7, 2.7)
+    a, b, c, d, e = axs
+    # ligacao: mola entre dois atomos
+    _spring(a, (0, 0.5), (2, 0.5))
+    _atom(a, (0, 0.5), 0.42, text='C'); _atom(a, (2, 0.5), 0.42, text='C')
+    _dim(a, (0, -0.35), (2, -0.35), 'r', y_text=-0.55)
+    a.text(1, 1.5, 'esticar ou comprimir\ncusta energia', ha='center', va='bottom', fontsize=8.5)
+    a.set_title('Ligação: dois átomos', fontsize=10)
+    # angulo: tres atomos, theta no atomo central
+    o = np.array([1.0, -0.6]); L = 1.8; h = np.radians(109.5 / 2)
+    p1, p3 = o + L * np.array([-np.sin(h), np.cos(h)]), o + L * np.array([np.sin(h), np.cos(h)])
+    _stick(b, o, p1); _stick(b, o, p3)
+    th = np.linspace(90 - 54.75, 90 + 54.75, 60)
+    b.plot(o[0] + 0.85 * np.cos(np.radians(th)), o[1] + 0.85 * np.sin(np.radians(th)), color=C[0], lw=1.4)
+    b.text(o[0], o[1] + 1.05, 'θ', ha='center', va='bottom', fontsize=11, color=C[0])
+    for pt, k in ((p1, '1'), (o, '2'), (p3, '3')):
+        _atom(b, pt, 0.36, text=k)
+    b.text(1.0, -1.35, 'θ₀ = 109,5° (carbono sp³)', ha='center', va='center', fontsize=8.5)
+    b.set_title('Ângulo: três átomos', fontsize=10)
+    # diedro: quatro atomos, rotacao em torno da ligacao 2-3
+    p1, p2, p3, p4 = (-0.6, 1.3), (0.0, 0.3), (1.6, 0.3), (2.2, -0.7)
+    _stick(c, p1, p2); _stick(c, p2, p3, lw=3.0); _stick(c, p3, p4)
+    _stick(c, p3, (2.2, 1.3), ls=(0, (2, 2)), lw=1.4)
+    _atom(c, (2.2, 1.3), 0.36, fc='white', alpha=0.6)
+    for pt, k in ((p1, '1'), (p2, '2'), (p3, '3'), (p4, '4')):
+        _atom(c, pt, 0.36, text=k)
+    th = np.radians(np.linspace(110, 410, 120))
+    cx, rx, ry = 0.8, 0.28, 0.6
+    c.plot(cx + rx * np.cos(th[:-6]), 0.3 + ry * np.sin(th[:-6]), color=C[0], lw=1.4, zorder=5)
+    arrow(c, (cx + rx * np.cos(th[-6]), 0.3 + ry * np.sin(th[-6])),
+          (cx + rx * np.cos(th[-1]), 0.3 + ry * np.sin(th[-1])), color=C[0], ms=10, z=5)
+    c.text(cx, 1.15, 'φ', ha='center', va='bottom', fontsize=11, color=C[0])
+    c.text(1.0, -1.35, 'giro em torno da ligação 2-3', ha='center', va='center', fontsize=8.5)
+    c.set_title('Diedro: quatro átomos', fontsize=10)
+    # Lennard-Jones: tres distancias entre dois oxigenios
+    for y, gap, lab, push in ((2.0, 0.42, 'perto demais: repele', 1), (0.65, 0.72, 'r ≈ 0,35 nm: mínimo', 0),
+                              (-0.7, 2.0, 'longe: U ≈ 0', 0)):
+        x0 = 1.0 - gap / 2
+        _atom(d, (x0, y), 0.34, fc=OXY, alpha=0.85); _atom(d, (x0 + gap, y), 0.34, fc=OXY, alpha=0.85)
+        if push:
+            arrow(d, (x0 - 0.38, y), (x0 - 0.9, y), color=C[0], ms=9)
+            arrow(d, (x0 + gap + 0.38, y), (x0 + gap + 0.9, y), color=C[0], ms=9)
+        d.text(1.0, y - 0.42, lab, ha='center', va='top', fontsize=8.5)
+    d.set_title('Lennard-Jones: O e O da água', fontsize=10)
+    # Coulomb: atracao entre cargas opostas, repulsao entre iguais
+    for y, qa, qb, fa, attract, lab in ((1.3, 'O⁻', 'H⁺', OXY, True, 'atrai'), (-0.6, 'H⁺', 'H⁺', HYD, False, 'repele')):
+        _atom(e, (-0.6, y), 0.42 if fa == OXY else 0.3, fc=fa, text=qa, alpha=0.9)
+        _atom(e, (1.6, y), 0.3, fc=HYD, text=qb)
+        if attract:
+            arrow(e, (-0.1, y), (0.4, y), color=C[0], ms=9); arrow(e, (1.2, y), (0.7, y), color=C[0], ms=9)
+        else:
+            arrow(e, (-1.0, y), (-1.5, y), color=C[0], ms=9); arrow(e, (2.0, y), (2.5, y), color=C[0], ms=9)
+        e.text(0.5, y - 0.6, lab, ha='center', va='top', fontsize=8.5)
+    e.set_title('Coulomb: cargas da água', fontsize=10)
+    fig.suptitle('O que cada termo do campo de força descreve (esquema)', fontsize=11, y=1.02)
+    save(fig, 'fund_termos_esquema.png')
+
+
+def _newman(ax, phi, title, sub_col=C[0], back_col=C[5]):
+    """Projecao de Newman: olhando a ligacao 2-3 de frente; atomo 1 na frente, atomo 4 atras."""
+    ax.set_aspect('equal', adjustable='datalim'); frame_off(ax); ax.set_xlim(-1.75, 1.75); ax.set_ylim(-1.75, 1.95)
+    R, L = 0.55, 1.25
+    shift = 8 if phi % 360 == 0 else 0           # eclipsada: afasta um pouco para os dois aparecerem
+    for k in range(3):                           # atras: comecam na borda do disco
+        ang = np.radians(90 - phi - shift + 120 * k)
+        u = np.array([np.cos(ang), np.sin(ang)])
+        _stick(ax, R * u, L * u, lw=2.0, z=1)
+        _atom(ax, L * u, 0.24 if k else 0.3, fc=back_col if k == 0 else HYD, text='4' if k == 0 else None, z=1.5)
+    ax.add_patch(Circle((0, 0), R, fc='white', ec=INK, lw=1.2, zorder=3))
+    ax.text(0, -0.02, '2', ha='center', va='center', fontsize=8, color=GREY, zorder=6)
+    for k in range(3):                           # frente: saem do centro
+        ang = np.radians(90 + 120 * k)
+        u = np.array([np.cos(ang), np.sin(ang)])
+        _stick(ax, 0.12 * u, L * u, lw=2.0, z=4)
+        _atom(ax, L * u, 0.3 if k == 0 else 0.24, fc=sub_col if k == 0 else HYD, text='1' if k == 0 else None, z=5)
+    if phi % 360:
+        th = np.radians(np.linspace(90, 90 - phi, 60))
+        ax.plot(0.85 * np.cos(th), 0.85 * np.sin(th), color=INK, lw=1.0, zorder=6)
+        m = np.radians(90 - phi / 2)
+        ax.text(1.05 * np.cos(m), 1.05 * np.sin(m), 'φ', ha='center', va='center', fontsize=10, zorder=6)
+    ax.set_title(title, fontsize=10)
+
+
+def fig_dihedral():
+    fig = plt.figure(figsize=(18, 4.4))
+    gs = fig.add_gridspec(1, 5, width_ratios=[1.35, 1, 1, 1, 1.35], wspace=0.25)
+    # painel 1: quatro atomos em 3D, dois planos e o angulo entre eles
+    ax = fig.add_subplot(gs[0]); ax.set_aspect('equal', adjustable='datalim'); frame_off(ax)
+    phi = np.radians(120)
+    b = 2.2; s = 1.4
+    X = np.array([[-0.5, s, 0.0], [0, 0, 0], [b, 0, 0], [b + 0.5, s * np.cos(phi), s * np.sin(phi)]])
+    def Rx(a):
+        a = np.radians(a); return np.array([[1, 0, 0], [0, np.cos(a), -np.sin(a)], [0, np.sin(a), np.cos(a)]])
+    def Ry(a):
+        a = np.radians(a); return np.array([[np.cos(a), 0, np.sin(a)], [0, 1, 0], [-np.sin(a), 0, np.cos(a)]])
+    M = Rx(25) @ Ry(-40)
+    P = lambda v: (M @ np.asarray(v, float))[:2]
+    v1, v4 = np.array([0, s, 0]), np.array([0, s * np.cos(phi), s * np.sin(phi)])
+    for v, col in ((v1, C[0]), (v4, C[5])):
+        quad = [P(X[1] + [-0.4, 0, 0]), P(X[2] + [0.4, 0, 0]), P(X[2] + [0.4, 0, 0] + 1.15 * v), P(X[1] + [-0.4, 0, 0] + 1.15 * v)]
+        ax.add_patch(Polygon(quad, closed=True, fc=col, alpha=0.14, ec=col, lw=0.8, zorder=1))
+    mid = (X[1] + X[2]) / 2
+    arc = np.array([P(mid + 0.8 * (np.cos(t) * v1 / s + np.sin(t) * np.array([0, 0, 1]))) for t in np.linspace(0, phi, 50)])
+    ax.plot(arc[:, 0], arc[:, 1], color=INK, lw=1.0, zorder=6)
+    for k, v in ((0, v1), (1, v4)):
+        _stick(ax, P(mid), P(mid + 0.8 * v / s), color=INK, lw=0.6, ls=(0, (2, 2)), z=5)
+    k = np.argmin(arc[:, 0])
+    ax.text(arc[k, 0] - 0.12, arc[k, 1], 'φ', ha='right', va='center', fontsize=11, zorder=6)
+    pts = [P(x) for x in X]
+    _stick(ax, pts[0], pts[1]); _stick(ax, pts[1], pts[2], lw=3.0); _stick(ax, pts[2], pts[3])
+    for k, (pt, col) in enumerate(zip(pts, (C[0], ATOM, ATOM, C[5]))):
+        _atom(ax, pt, 0.22, fc=col, text=str(k + 1), fs=8.5, z=7)
+    allp = np.array([P(X[i] + [d, 0, 0] + 1.15 * v) for v in (v1, v4) for i, d in ((1, -0.4), (2, 0.4))] + pts)
+    c1 = P(X[2] + [0.4, 0, 0] + 1.15 * v1); c4 = P(X[2] + [0.4, 0, 0])
+    ax.text(c1[0] + 0.1, c1[1], 'plano 1-2-3', color=C[0], fontsize=8.5, ha='left', va='center')
+    ax.text(c4[0] + 0.1, c4[1], 'plano 2-3-4', color=C[5], fontsize=8.5, ha='left', va='center')
+    x0, x1 = allp[:, 0].min() - 0.3, max(c1[0], c4[0]) + 1.6
+    y0, y1 = allp[:, 1].min() - 0.4, allp[:, 1].max() + 0.4
+    bb = ax.get_position(); cell = (bb.width * fig.get_figwidth()) / (bb.height * fig.get_figheight())
+    if (x1 - x0) / (y1 - y0) < cell:             # alarga o eixo curto para o painel ocupar a celula inteira
+        pad = (cell * (y1 - y0) - (x1 - x0)) / 2; x0, x1 = x0 - pad, x1 + pad
+    else:
+        pad = ((x1 - x0) / cell - (y1 - y0)) / 2; y0, y1 = y0 - pad, y1 + pad
+    ax.set_xlim(x0, x1); ax.set_ylim(y0, y1)
+    ax.set_title('Ângulo entre dois planos', fontsize=10)
+    # paineis 2-4: projecoes de Newman
+    for k, (ph, t) in enumerate(((180, 'φ = 180°: anti, mínimo'), (60, 'φ = 60°: gauche, mínimo'),
+                                  (0, 'φ = 0°: eclipsada, máximo'))):
+        _newman(fig.add_subplot(gs[k + 1]), ph, t)
+    # painel 5: energia do diedro com os tres estados marcados
+    ax = fig.add_subplot(gs[4])
+    x = np.linspace(-180, 180, 400)
+    U = lambda f: 5 * (1 + np.cos(np.radians(3 * np.asarray(f))))
+    ax.plot(x, U(x), color=C[0])
+    for f, lab, dy, ha in ((180, 'anti', -0.7, 'right'), (60, 'gauche', -0.7, 'center'), (0, 'eclipsada', 0.6, 'center')):
+        ax.plot(f, U(f), 'o', color=C[5], ms=6, zorder=5)
+        ax.text(f, U(f) + dy, lab, ha=ha, fontsize=8.5, va='bottom' if dy > 0 else 'top')
+    ax.set(xlabel='φ (graus)', ylabel='U (kJ/mol)', xticks=[-180, -60, 60, 180], ylim=(-2.6, 12.8))
+    ax.set_title('U(φ) = k(1 + cos 3φ)', fontsize=10)
+    fig.suptitle('O diedro: rotação em torno da ligação central (esquema)', fontsize=11, y=1.03)
+    save(fig, 'fund_diedro.png')
+
+
+MEM_REP = Path(__file__).resolve().parents[1] / 'runs' / 'aula_martini' / 'rep1'
+DENS_COL = {'NC3': '#4c72b0', 'PO4': '#c44e52', 'GL': '#55a868', 'Caudas': '#8c8c8c', 'W': WATER}
+
+
+def _density_profile():
+    """Perfil real da replica 1 (segunda metade da equilibracao), como no notebook,
+    e a profundidade media |z| de cada bead do DSPC para posicionar o esquema."""
+    import mdtraj as md
+    t = md.load(MEM_REP / 'mem_eq_whole.xtc', top=MEM_REP / 'mem_rot.gro')
+    last = t[t.n_frames // 2:]
+    tq = last.topology
+    tails = tq.select('name =~ "C[1-4][AB]"')
+    groups = {'NC3': tq.select('name NC3'), 'PO4': tq.select('name PO4'), 'GL': tq.select('name =~ "GL[12]"'),
+              'Caudas': tails, 'W': tq.select('resname W')}
+    Lz = last.unitcell_lengths[:, 2]
+    z = last.xyz[:, :, 2]
+    ang = 2 * np.pi * z[:, tails] / Lz[:, None]
+    center = (np.arctan2(np.sin(ang).mean(1), np.cos(ang).mean(1)) / (2 * np.pi)) * Lz
+    zc = (z - center[:, None] + Lz[:, None] / 2) % Lz[:, None] - Lz[:, None] / 2
+    bins = np.linspace(-Lz.mean() / 2, Lz.mean() / 2, 81)
+    mid = 0.5 * (bins[1:] + bins[:-1])
+    prof = {k: np.histogram(zc[:, i].ravel(), bins=bins)[0] / last.n_frames for k, i in groups.items()}
+    depth = {n: float(np.abs(zc[:, tq.select(f'name {n}')]).mean())
+             for n in ('NC3', 'PO4', 'GL1', 'GL2', 'C1A', 'C2A', 'C3A', 'C4A', 'C1B', 'C2B', 'C3B', 'C4B')}
+    return mid, prof, depth
+
+
+def fig_density_scheme():
+    """Bicamada de DSPC em beads deitada sobre o eixo do perfil de densidade: cada curva
+    do grafico e a contagem, fatia a fatia, de um tipo de bead do esquema de cima."""
+    mid, prof, dep = _density_profile()
+    lim = mid[-1] + 0.1
+    H = 5.8                                            # altura do esquema (nm), mesma escala do eixo x
+    left, wid, bot, hb, gap, top = 0.85, 6.6, 0.7, 3.4, 0.75, 0.8
+    ht = wid * H / (2 * lim)
+    W, Ht = left + wid + 1.3, bot + hb + gap + ht + top
+    fig = plt.figure(figsize=(W, Ht))
+    b = fig.add_axes([left / W, bot / Ht, wid / W, hb / Ht])
+    a = fig.add_axes([left / W, (bot + hb + gap) / Ht, wid / W, ht / Ht], sharex=b)
+    rng = np.random.default_rng(3)
+    r = 0.17
+    rows = np.arange(0.45, H, 0.96)                    # posicao de cada lipidio ao longo do plano
+    tail_y = (-0.21, 0.21)                             # cadeias A e B lado a lado
+    occupied = []
+    for side in (-1, 1):
+        for y in rows:
+            j = rng.normal(0, 0.07)                    # flutuacao de cada lipidio ao longo da normal
+            X = lambda n: side * (dep[n] + j)  # noqa: E731
+            pa = [(X('GL1'), y + tail_y[0])] + [(X(f'C{k}A'), y + tail_y[0]) for k in range(1, 5)]
+            pb = [(X('GL2'), y + tail_y[1])] + [(X(f'C{k}B'), y + tail_y[1]) for k in range(1, 5)]
+            po4 = (X('PO4'), y)
+            nc3 = (X('NC3'), y + 0.36)                 # a colina deita ao lado do fosfato
+            for p, q in [(nc3, po4), (po4, pa[0]), (po4, pb[0]), (pa[0], pb[0])] + list(zip(pa, pa[1:])) + list(zip(pb, pb[1:])):
+                a.plot(*np.c_[p, q], color=GREY, lw=1.0, zorder=1)
+            beads = [(nc3, DENS_COL['NC3']), (po4, DENS_COL['PO4']), (pa[0], DENS_COL['GL']), (pb[0], DENS_COL['GL'])]
+            beads += [(p, DENS_COL['Caudas']) for p in pa[1:] + pb[1:]]
+            for p, col in beads:
+                a.add_patch(Circle(p, r, fc=col, ec=INK, lw=0.5, zorder=3))
+                occupied.append(p)
+    # Agua sorteada pela densidade real de W: some no nucleo, entra pouco entre as cabecas
+    w_prof = prof['W'] / prof['W'].max()
+    occ = np.array(occupied)
+    water = []
+    for _ in range(40000):
+        p = np.array([rng.uniform(-lim + r, lim - r), rng.uniform(r, H - r)])
+        dens = np.interp(p[0], mid, w_prof)
+        if dens < 0.02 or rng.random() > dens:
+            continue
+        pts = np.r_[occ, np.array(water).reshape(-1, 2)]
+        if np.min(np.hypot(*(pts - p).T)) < 2 * r + 0.03:
+            continue
+        water.append(p)
+    for p in water:
+        a.add_patch(Circle(p, r, fc=WATER, ec='#6f9fb8', lw=0.5, zorder=2))
+    a.set_xlim(-lim, lim); a.set_ylim(0, H)
+    a.set_yticks([]); a.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
+    for x, lab in ((-3.7, 'água'), (-2.0, 'cabeças'), (0, 'núcleo de caudas'), (2.0, 'cabeças'), (3.7, 'água')):
+        a.text(x, H + 0.12, lab, ha='center', va='bottom', fontsize=9, color=INK)
+    a.set_title('Bicamada de DSPC vista de lado: a normal é o eixo horizontal (esquema)', fontsize=11, pad=22)
+
+    for k, y in prof.items():
+        b.plot(mid, y, color=DENS_COL[k], lw=1.6, label=k)
+    i_l = np.argmax(np.where(mid < 0, prof['PO4'], 0)); i_r = np.argmax(np.where(mid > 0, prof['PO4'], 0))
+    for ax in (a, b):
+        for x in (mid[i_l], 0, mid[i_r]):
+            ax.axvline(x, color=INK, lw=0.7, ls=(0, (3, 3)), zorder=0)
+    ytop = 44
+    b.add_patch(FancyArrowPatch((mid[i_l], ytop), (mid[i_r], ytop), arrowstyle='<|-|>', mutation_scale=10, color=DENS_COL['PO4'], lw=1.1))
+    b.text(0, ytop + 1.2, f'$D_{{PP}}$ = {mid[i_r] - mid[i_l]:.2f} nm'.replace('.', ','), ha='center', va='bottom', fontsize=10, color=INK)
+    b.set_ylim(-1, 50); b.set_xlim(-lim, lim)
+    b.set_xlabel('Distância ao centro da bicamada (nm)'); b.set_ylabel('beads por fatia')
+    b.set_title('Perfil de densidade ao longo da normal (réplica 1)', fontsize=11)
+    fig.legend(*b.get_legend_handles_labels(), loc='center left', bbox_to_anchor=((left + wid + 0.15) / W, (bot + hb / 2) / Ht), frameon=False, fontsize=9)
+    save(fig, 'martini_perfil_esquema.png')
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     fig_photo_film(); fig_sickle(); fig_misfolding(); fig_milestones()
     fig_ubiquitin_tag(); fig_oil_surfactant(); fig_replica_divergence()
     fig_p53_structure(); fig_p53_y220c(); fig_mutation_effects()
+    fig_force_field_schemes(); fig_dihedral(); fig_density_scheme()
 
 
 if __name__ == '__main__':
