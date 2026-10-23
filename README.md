@@ -6,6 +6,10 @@ Material didático e notebook para o Google Colab sobre dinâmica molecular em r
 |----------|-----------|----------|-------|
 | `MD_Martini.ipynb` | coarse-grained, Martini 3 | ubiquitina (1UBQ) em água; automontagem de bicamada de DSPC | <a href="https://colab.research.google.com/github/madsondeluna/curso-md/blob/main/MD_Martini.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
 
+| Slides | Páginas | Arquivo |
+|--------|---------|---------|
+| Aula de dinâmica molecular | 79 | [slides/aula-dinamica-molecular.pdf](slides/aula-dinamica-molecular.pdf) |
+
 
 | Autoria | |
 |---|---|

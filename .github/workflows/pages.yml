@@ -3,7 +3,7 @@ name: site
 on:
   push:
     branches: [main]
-    paths: [README.md, guias/**, imagens/**, site_theme/**, mkdocs.yml, tools/build_site.py, .github/workflows/pages.yml]
+    paths: [README.md, guias/**, imagens/**, slides/**, site_theme/**, mkdocs.yml, tools/build_site.py, .github/workflows/pages.yml]
   workflow_dispatch:
 
 permissions:

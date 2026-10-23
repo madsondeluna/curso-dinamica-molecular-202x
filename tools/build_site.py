@@ -1,4 +1,4 @@
-"""Monta site_src/ (entrada do MkDocs) a partir do README, dos guias e das imagens.
+"""Monta site_src/ (entrada do MkDocs) a partir do README, dos guias, das imagens e dos slides.
 
 O README vira uma pagina por secao `##`; a capa recebe o titulo, a introducao,
 os cartoes de navegacao e o roteiro. Gera tambem mkdocs.gen.yml com o nav.
@@ -86,6 +86,7 @@ hide:
 
 [Abrir no Colab]({COLAB}){{ .md-button .md-button--primary target="_blank" }}
 [Começar a aula]({pages[0][1]}){{ .md-button }}
+[Slides da aula (PDF)](slides/aula-dinamica-molecular.pdf){{ .md-button target="_blank" }}
 
 </div>
 
@@ -113,6 +114,7 @@ def main():
     shutil.rmtree(OUT, ignore_errors=True)
     (OUT / 'guias').mkdir(parents=True)
     shutil.copytree(ROOT / 'imagens', OUT / 'imagens', ignore=shutil.ignore_patterns('._*'))
+    shutil.copytree(ROOT / 'slides', OUT / 'slides', ignore=shutil.ignore_patterns('._*'))
     shutil.copytree(ROOT / 'site_theme', OUT, dirs_exist_ok=True, ignore=shutil.ignore_patterns('._*'))
 
     preamble, sections = split_readme(repo_links((ROOT / 'README.md').read_text()))
