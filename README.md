@@ -8,7 +8,7 @@ Material didático e notebook para o Google Colab sobre dinâmica molecular em r
 
 | Slides | Páginas | Arquivo |
 |--------|---------|---------|
-| Aula de dinâmica molecular | 79 | [slides/aula-dinamica-molecular.pdf](slides/aula-dinamica-molecular.pdf) |
+| Aula de dinâmica molecular | 90 | [slides/aula-dinamica-molecular.pdf](slides/aula-dinamica-molecular.pdf) |
 
 
 | Autoria | |
@@ -26,6 +26,7 @@ Material didático e notebook para o Google Colab sobre dinâmica molecular em r
 
 - [Roteiro da aula](#roteiro-da-aula)
 - [Como usar no Google Colab](#como-usar-no-google-colab)
+- [Biomoléculas: do átomo à simulação](#biomoléculas-do-átomo-à-simulação)
 - [1. O que a dinâmica molecular faz](#1-o-que-a-dinâmica-molecular-faz)
 - [2. Quatro resoluções: QM, all-atom, united-atom e coarse-grained](#2-quatro-resoluções-qm-all-atom-united-atom-e-coarse-grained)
 - [3. Paisagem energética](#3-paisagem-energética)
@@ -45,6 +46,7 @@ Material didático e notebook para o Google Colab sobre dinâmica molecular em r
 
 | Bloco | Conteúdo | Material |
 |-------|----------|----------|
+| 0 | Biomoléculas: átomos, quatro classes, representações e por que simular | seção *Biomoléculas* |
 | 1 | Ciclo da MD, campo de força, passo de tempo, caixa periódica | seção 1; capítulo *Fundamentos* do notebook |
 | 2 | A mesma molécula em quatro resoluções; mapeamento 4:1 | seção 2 |
 | 3 | Paisagem energética, funil e por que os relógios não se comparam | seção 3 |
@@ -74,6 +76,126 @@ Parâmetros na segunda célula de `MD_Martini.ipynb`:
 | `MD_Martini.ipynb` | `USE_PRECOMPUTED = False` | 1,5 a 2,5 h (Parte A: 15 ns; Parte B: 15 + 5 ns) |
 
 Dentro da mesma sessão, cada etapa concluída é reaproveitada e uma simulação interrompida continua do último checkpoint; os arquivos são apagados quando a sessão do Colab termina. Uma etapa de MD só conta como concluída quando o `.gro` final existe.
+
+
+## Biomoléculas: do átomo à simulação
+
+Uma simulação de MD começa com uma lista de átomos e suas posições. Antes de simular, é preciso saber que moléculas são essas, de que átomos são feitas e como esses átomos aparecem na tela.
+
+### Os átomos das biomoléculas
+
+Seis elementos formam quase toda a massa de uma biomolécula: hidrogênio, carbono, nitrogênio, oxigênio, fósforo e enxofre. O carbono faz quatro ligações e por isso sustenta cadeias e anéis. O nitrogênio aparece no grupo amino dos aminoácidos e nas bases do DNA e do RNA. O fósforo aparece nos fosfatos do esqueleto dos ácidos nucleicos, dos fosfolipídios e do ATP. O enxofre aparece na cisteína e na metionina.
+
+![Os seis elementos](imagens/bio_atomos.png)
+
+| Elemento | Cor convencional (CPK) | Vizinhos típicos | Raio de van der Waals (Å) |
+|----------|------------------------|------------------|---------------------------|
+| H | branco | 1 | 1,20 |
+| C | cinza | 4 | 1,70 |
+| N | azul | 3 | 1,55 |
+| O | vermelho | 2 | 1,52 |
+| P | laranja | 4 (no fosfato) | 1,80 |
+| S | amarelo | 2 | 1,80 |
+
+As cores vêm dos modelos físicos de Corey e Pauling (1953) e Koltun (1965) e são as mesmas no PyMOL, no VMD e no Mol\*. Os raios são os de Bondi (1964). Na ubiquitina, 629 dos 1 231 átomos são hidrogênios, e nenhum deles aparece no cristal 1UBQ: a difração de raios X quase não enxerga o hidrogênio, e os programas de preparação o adicionam antes da simulação.
+
+### Quatro classes de biomoléculas
+
+| Classe | Unidade | Ligação entre unidades | Exemplo nesta aula |
+|--------|---------|------------------------|--------------------|
+| Proteínas | aminoácido (20 tipos) | ligação peptídica | ubiquitina, 76 resíduos (Parte A) |
+| Ácidos nucleicos | nucleotídeo (A, C, G, T no DNA; A, C, G, U no RNA) | ligação fosfodiéster | DNA do dodecâmero 1BNA |
+| Lipídios | fosfolipídio, colesterol | nenhuma: se agregam por efeito hidrofóbico | bicamada de DSPC (Parte B) |
+| Carboidratos | monossacarídeo (glicose, galactose, manose) | ligação glicosídica | maltose, duas glicoses |
+
+![Quatro classes de biomoléculas](imagens/bio_classes.png)
+
+Proteínas, ácidos nucleicos e carboidratos são polímeros: as unidades se ligam por ligações covalentes. Os lipídios não: cada fosfolipídio é uma molécula separada, e a bicamada se mantém porque as caudas apolares se escondem da água. Por isso a Parte B consegue partir de lipídios espalhados ao acaso e terminar numa bicamada.
+
+### Proteínas
+
+Uma proteína é uma cadeia de aminoácidos ligados pelo grupo carboxila de um ao grupo amino do seguinte. A estrutura se descreve em quatro níveis: a sequência (primária), as hélices α e fitas β mantidas por ligações de hidrogênio do esqueleto (secundária; Pauling, Corey e Branson, 1951), a cadeia inteira dobrada (terciária) e a associação de várias cadeias (quaternária).
+
+![Quatro níveis de estrutura](imagens/bio_proteina_niveis.png)
+
+Medidas no cristal 1UBQ: as duas primeiras ligações peptídicas da ubiquitina têm C-N de 1,30 e 1,32 Å, mais curtas que uma ligação C-N simples (1,47 Å) por causa do caráter parcial de dupla ligação, que deixa o grupo peptídico plano. Na hélice dos resíduos 23 a 34, o oxigênio da carbonila de cada resíduo faz ligação de hidrogênio com o nitrogênio do resíduo quatro posições adiante: oito dessas ligações, entre 2,9 e 3,1 Å.
+
+**Exemplo saudável: hemoglobina.** Quatro cadeias, duas α e duas β, cada uma com um heme que liga oxigênio (Fermi *et al.*, 1984). A estrutura quaternária é o que permite a ligação cooperativa: o oxigênio que entra numa cadeia muda a forma das outras.
+
+**Exemplo patológico: osteogênese imperfeita.** O colágeno é uma tripla hélice em que cada terceiro resíduo é uma glicina, o único aminoácido pequeno o suficiente para caber no centro. Na osteogênese imperfeita, mutações trocam essa glicina por outro resíduo e o osso fica frágil (Marini *et al.*, 2007). O peptídeo do cristal 1CAG tem exatamente uma troca dessas, Gly por Ala (Bella *et al.*, 1994). Medindo a distância entre o nitrogênio de cada Gly e o oxigênio mais próximo da cadeia vizinha, as glicinas ficam entre 2,5 e 3,1 Å, na faixa de ligação de hidrogênio. As três alaninas ficam entre 4,3 e 4,5 Å: a ligação que amarrava as cadeias some ali.
+
+![Colágeno com Gly trocada por Ala](imagens/bio_colageno.png)
+
+### DNA e RNA
+
+Um nucleotídeo tem três partes: uma base nitrogenada, um açúcar de cinco carbonos e um fosfato. O fosfato liga o carbono 3' de um açúcar ao carbono 5' do seguinte, e as bases de duas fitas se pareiam por ligações de hidrogênio: A com T por duas, G com C por três (Watson e Crick, 1953).
+
+![DNA: pares de bases, esqueleto e dímero de timina](imagens/bio_dna.png)
+
+No dodecâmero 1BNA (Drew *et al.*, 1981), as ligações de hidrogênio do par A5·T20 medem 2,70 e 2,91 Å, e as do par G4·C21, 2,61, 2,72 e 2,74 Å.
+
+**Exemplo saudável: replicação fiel.** O pareamento por ligações de hidrogênio é o que permite copiar a sequência: cada fita serve de molde para a outra.
+
+**Exemplo patológico: xeroderma pigmentoso.** A luz ultravioleta liga duas timinas vizinhas da mesma fita num anel de ciclobutano. No cristal 1N4E (Park *et al.*, 2002), as ligações novas C5-C5 e C6-C6 medem 1,51 e 1,54 Å; no DNA normal, os mesmos átomos de duas timinas empilhadas ficam a 4,3 Å. Pessoas com xeroderma pigmentoso não reparam essas lesões (Cleaver, 1968) e têm câncer de pele muito mais cedo.
+
+O RNA difere do DNA em dois pontos: a ribose tem um grupo OH no carbono 2', e a uracila ocupa o lugar da timina, sem a metila. O RNA costuma ser uma fita única que pareia consigo mesma e dobra em três dimensões, como uma proteína.
+
+![RNA: ribose, uracila, tRNA e repetições CUG](imagens/bio_rna.png)
+
+**Exemplo saudável: tRNA.** O tRNA de fenilalanina da levedura tem 76 nucleotídeos dobrados em forma de L (Shi e Moore, 2000): uma ponta lê o códon do mRNA e a outra carrega o aminoácido. No ribossomo, quem forma a ligação peptídica é o próprio RNA ribossômico (Nissen *et al.*, 2000).
+
+**Exemplo patológico: distrofia miotônica tipo 1.** Uma expansão de repetições CUG no RNA pareia consigo mesma, com uma uracila diante da outra em cada terceira posição; no cristal 3GM7, dois trechos (CUG)₆ formam uma dupla hélice assim (Kiliszek *et al.*, 2009). Esse RNA pareado sequestra a proteína muscleblind (Miller *et al.*, 2000), que deixa de regular o processamento de outros RNAs no músculo.
+
+### Lipídios
+
+Um fosfolipídio tem uma cabeça polar (colina e fosfato, no caso da fosfatidilcolina), um glicerol e duas caudas de hidrocarboneto. O DSPC da Parte B tem duas caudas saturadas de 18 carbonos. O colesterol é outro tipo de lipídio: quatro anéis rígidos e um único grupo OH, que fica na altura das cabeças dos fosfolipídios.
+
+![Lipídios: DSPC, colesterol e a membrana da hemácia](imagens/bio_lipidios.png)
+
+**Exemplo saudável: membrana da hemácia.** A proporção entre colesterol e fosfolipídios ajusta a fluidez da membrana. A hemácia normal se deforma para passar por capilares mais estreitos que ela.
+
+**Exemplo patológico: spur cells.** Na doença hepática grave, lipoproteínas anormais transferem colesterol para a hemácia. O colesterol da membrana e a razão colesterol:fosfolipídio aumentam, a célula ganha projeções espinhosas e é destruída no baço (Cooper, 1969).
+
+### Carboidratos
+
+Um monossacarídeo como a glicose fecha um anel de cinco carbonos e um oxigênio. Dois anéis se ligam por uma ligação glicosídica: na maltose, o carbono 1 de uma glicose se liga ao oxigênio 4 da outra, α(1-4). Cadeias longas formam amido e glicogênio. Cadeias curtas e ramificadas, os glicanos, ficam presas a proteínas e lipídios na superfície das células.
+
+![Carboidratos: glicose, maltose, ABO e glicanos da espícula](imagens/bio_carboidratos.png)
+
+**Exemplo saudável: grupos sanguíneos ABO.** Os três grupos diferem por um único açúcar no fim de um glicano da hemácia: o grupo O tem o antígeno H, o A acrescenta uma N-acetilgalactosamina e o B, uma galactose. A diferença vem de duas versões de uma mesma enzima que adiciona o açúcar (Yamamoto *et al.*, 1990). Os símbolos da figura seguem a nomenclatura SNFG (Varki *et al.*, 2015).
+
+**Exemplo patológico: escudo de glicanos do SARS-CoV-2.** A espícula do vírus é coberta por glicanos que escondem boa parte da superfície da proteína dos anticorpos. Simulações all-atom da espícula com todos os glicanos mostraram quanto da superfície fica coberta e que dois glicanos também sustentam a forma aberta da proteína (Casalino *et al.*, 2020).
+
+### Como os átomos são representados
+
+A mesma molécula aparece de formas diferentes conforme a pergunta. A fórmula de esqueleto, usada em química, omite os carbonos e os hidrogênios ligados a eles. As representações 3D partem das coordenadas: bastões mostram as ligações, esferas e bastões mostram átomos e ligações juntos, e o preenchimento espacial mostra o volume que a molécula ocupa, com cada átomo no seu raio de van der Waals.
+
+![Quatro representações da fenilalanina](imagens/bio_representacoes_atomo.png)
+
+| Representação | Mostra | Usada para |
+|---------------|--------|------------|
+| Fórmula de esqueleto | conectividade, sem geometria 3D | desenhar e reconhecer a molécula |
+| Bastões | ligações e geometria | ver cadeias laterais e ligantes num sítio |
+| Esferas e bastões | átomos e ligações | ensinar geometria, ver cada átomo |
+| Preenchimento espacial | volume ocupado | ver encaixe, cavidades, contato com a água |
+| Traço do Cα ou cartoon | só o esqueleto da proteína | ver o enovelamento (painéis de proteína acima) |
+| Beads coarse-grained | grupos de átomos como uma partícula | simulações Martini (seção 2) |
+
+### Por que simular essas moléculas
+
+Uma estrutura do PDB mostra uma posição média dos átomos no cristal. As biomoléculas se movem em escalas de tempo que vão de femtossegundos a horas, e a função quase sempre depende desse movimento.
+
+![Escalas de tempo dos movimentos](imagens/bio_escalas_tempo.png)
+
+| Classe | O que a estrutura estática não mostra | O que a MD mede | Nesta aula ou exemplo |
+|--------|---------------------------------------|-----------------|------------------------|
+| Proteínas | cadeias laterais e alças que se movem de ps a µs (Henzler-Wildman e Kern, 2007) | RMSD, RMSF, bolsões que abrem e fecham | ubiquitina, Parte A; p53, seção 3 |
+| DNA | a forma local da dupla hélice, que varia com a sequência | largura do sulco menor, curvatura | proteínas reconhecem a forma do sulco menor, não só as bases (Rohs *et al.*, 2009) |
+| RNA | o caminho de dobramento e as mudanças de forma | contatos, dobramento de grampos | a entrada do tRNA no ribossomo foi simulada com 2,64 milhões de átomos (Sanbonmatsu, Joseph e Tung, 2005) |
+| Lipídios | a membrana não tem estrutura cristalina | espessura, área por lipídio, parâmetro de ordem | a bicamada de DSPC se forma em 5,5 e 6,3 ns nas réplicas 2 e 1, Parte B |
+| Carboidratos | glicanos são flexíveis e quase nunca aparecem inteiros no cristal | volume coberto, contatos com a proteína | escudo de glicanos da espícula (Casalino *et al.*, 2020) |
+
+A troca de um lipídio de uma monocamada para a outra (flip-flop) tem meia-vida de 6,5 h em vesículas (Kornberg e McConnell, 1971): está fora do alcance da MD direta. A formação de uma bicamada, que leva poucos nanossegundos no Martini, cabe numa aula. A escolha da resolução, que a seção 2 detalha, é o que leva cada fenômeno para dentro do tempo que se consegue simular.
 
 
 ## 1. O que a dinâmica molecular faz
@@ -693,6 +815,29 @@ rvdw                     = 1.1
 - Tutorial Martini 3, *Lipid bilayers, Part I: Self-assembly*: https://cgmartini.nl/docs/tutorials/Martini3/LipidsI/
 - Inputs do tutorial de Lemkul: https://github.com/Lemkul-Lab/gmx_tutorials_jpcb
 - Manual do GROMACS: https://manual.gromacs.org/
+- Bondi, A. van der Waals Volumes and Radii. *J. Phys. Chem.* **1964**, *68*, 441-451. https://doi.org/10.1021/j100785a001
+- Corey, R. B.; Pauling, L. Molecular Models of Amino Acids, Peptides, and Proteins. *Rev. Sci. Instrum.* **1953**, *24*, 621-627. https://doi.org/10.1063/1.1770803
+- Koltun, W. L. Precision space-filling atomic models. *Biopolymers* **1965**, *3*, 665-679. https://doi.org/10.1002/bip.360030606
+- Pauling, L.; Corey, R. B.; Branson, H. R. The structure of proteins: Two hydrogen-bonded helical configurations of the polypeptide chain. *Proc. Natl. Acad. Sci. U.S.A.* **1951**, *37*, 205-211. https://doi.org/10.1073/pnas.37.4.205
+- Fermi, G.; Perutz, M. F.; Shaanan, B.; Fourme, R. The crystal structure of human deoxyhaemoglobin at 1.74 Å resolution. *J. Mol. Biol.* **1984**, *175*, 159-174. https://doi.org/10.1016/0022-2836(84)90472-8
+- Marini, J. C. *et al.* Consortium for osteogenesis imperfecta mutations in the helical domain of type I collagen: regions rich in lethal mutations align with collagen binding sites for integrins and proteoglycans. *Hum. Mutat.* **2007**, *28*, 209-221. https://doi.org/10.1002/humu.20429
+- Bella, J.; Eaton, M.; Brodsky, B.; Berman, H. M. Crystal and Molecular Structure of a Collagen-Like Peptide at 1.9 Å Resolution. *Science* **1994**, *266*, 75-81. https://doi.org/10.1126/science.7695699
+- Watson, J. D.; Crick, F. H. C. Molecular Structure of Nucleic Acids: A Structure for Deoxyribose Nucleic Acid. *Nature* **1953**, *171*, 737-738. https://doi.org/10.1038/171737a0
+- Drew, H. R. *et al.* Structure of a B-DNA dodecamer: conformation and dynamics. *Proc. Natl. Acad. Sci. U.S.A.* **1981**, *78*, 2179-2183. https://doi.org/10.1073/pnas.78.4.2179
+- Park, H. *et al.* Crystal structure of a DNA decamer containing a cis-syn thymine dimer. *Proc. Natl. Acad. Sci. U.S.A.* **2002**, *99*, 15965-15970. https://doi.org/10.1073/pnas.242422699
+- Cleaver, J. E. Defective Repair Replication of DNA in Xeroderma Pigmentosum. *Nature* **1968**, *218*, 652-656. https://doi.org/10.1038/218652a0
+- Shi, H.; Moore, P. B. The crystal structure of yeast phenylalanine tRNA at 1.93 Å resolution: A classic structure revisited. *RNA* **2000**, *6*, 1091-1105. https://doi.org/10.1017/s1355838200000364
+- Nissen, P.; Hansen, J.; Ban, N.; Moore, P. B.; Steitz, T. A. The Structural Basis of Ribosome Activity in Peptide Bond Synthesis. *Science* **2000**, *289*, 920-930. https://doi.org/10.1126/science.289.5481.920
+- Kiliszek, A.; Kierzek, R.; Krzyzosiak, W. J.; Rypniewski, W. Structural insights into CUG repeats containing the "stretched U-U wobble": implications for myotonic dystrophy. *Nucleic Acids Res.* **2009**, *37*, 4149-4156. https://doi.org/10.1093/nar/gkp350
+- Miller, J. W. *et al.* Recruitment of human muscleblind proteins to (CUG)n expansions associated with myotonic dystrophy. *EMBO J.* **2000**, *19*, 4439-4448. https://doi.org/10.1093/emboj/19.17.4439
+- Cooper, R. A. Anemia with spur cells: a red cell defect acquired in serum and modified in the circulation. *J. Clin. Invest.* **1969**, *48*, 1820-1831. https://doi.org/10.1172/jci106148
+- Yamamoto, F.; Clausen, H.; White, T.; Marken, J.; Hakomori, S. Molecular genetic basis of the histo-blood group ABO system. *Nature* **1990**, *345*, 229-233. https://doi.org/10.1038/345229a0
+- Varki, A. *et al.* Symbol Nomenclature for Graphical Representations of Glycans. *Glycobiology* **2015**, *25*, 1323-1324. https://doi.org/10.1093/glycob/cwv091
+- Casalino, L. *et al.* Beyond Shielding: The Roles of Glycans in the SARS-CoV-2 Spike Protein. *ACS Cent. Sci.* **2020**, *6*, 1722-1734. https://doi.org/10.1021/acscentsci.0c01056
+- Henzler-Wildman, K.; Kern, D. Dynamic personalities of proteins. *Nature* **2007**, *450*, 964-972. https://doi.org/10.1038/nature06522
+- Rohs, R. *et al.* The role of DNA shape in protein-DNA recognition. *Nature* **2009**, *461*, 1248-1253. https://doi.org/10.1038/nature08473
+- Sanbonmatsu, K. Y.; Joseph, S.; Tung, C. Simulating movement of tRNA into the ribosome during decoding. *Proc. Natl. Acad. Sci. U.S.A.* **2005**, *102*, 15854-15859. https://doi.org/10.1073/pnas.0503456102
+- Kornberg, R. D.; McConnell, H. M. Inside-outside transitions of phospholipids in vesicle membranes. *Biochemistry* **1971**, *10*, 1111-1120. https://doi.org/10.1021/bi00783a003
 
 
 ## Licença
